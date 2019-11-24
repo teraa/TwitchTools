@@ -46,6 +46,7 @@ namespace TwitchTools
             {
                 requestParams.Cursor = prev.Cursor;
                 requestParams.Limit = GetLimit(count, limit);
+                requestParams.Offset = 0;
                 return client.GetChannelFollowersAsync(userId, requestParams);
             }
             void Perform(GetChannelFollowersResponse response)
@@ -98,6 +99,7 @@ namespace TwitchTools
             }
             Task<GetUserFollowsResponse> NextRequest(GetUserFollowsResponse prev)
             {
+                requestParams.Offset += requestParams.Limit;
                 requestParams.Limit = GetLimit(count, limit);
                 return client.GetUserFollowsAsync(userId, requestParams);
             }

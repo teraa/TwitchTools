@@ -40,13 +40,13 @@ namespace TwitchTools
 
             Task<GetChannelFollowersResponse> Request()
             {
-                return client.GetChannelFollowers(userId, requestParams);
+                return client.GetChannelFollowersAsync(userId, requestParams);
             }
             Task<GetChannelFollowersResponse> NextRequest(GetChannelFollowersResponse prev)
             {
                 requestParams.Cursor = prev.Cursor;
                 requestParams.Limit = GetLimit(count, limit);
-                return client.GetChannelFollowers(userId, requestParams);
+                return client.GetChannelFollowersAsync(userId, requestParams);
             }
             void Perform(GetChannelFollowersResponse response)
             {
@@ -94,12 +94,12 @@ namespace TwitchTools
 
             Task<GetUserFollowsResponse> Request()
             {
-                return client.GetUserFollows(userId, requestParams);
+                return client.GetUserFollowsAsync(userId, requestParams);
             }
             Task<GetUserFollowsResponse> NextRequest(GetUserFollowsResponse prev)
             {
                 requestParams.Limit = GetLimit(count, limit);
-                return client.GetUserFollows(userId, requestParams);
+                return client.GetUserFollowsAsync(userId, requestParams);
             }
             void Perform(GetUserFollowsResponse response)
             {

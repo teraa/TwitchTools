@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Twitch.API.KrakenV5;
-using Twitch.API.KrakenV5.Rest;
+using Twitch.API.Kraken;
+using Twitch.API.Kraken.Rest;
 using TwitchTools.Utils;
 
 namespace TwitchTools
@@ -13,7 +13,7 @@ namespace TwitchTools
         static async Task Followers(string clientId, string userId, int limit, int offset, string direction)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            using var client = new RestApiClient(clientId);
+            using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var tableHeaders = new List<TableHeader>
@@ -68,7 +68,7 @@ namespace TwitchTools
         static async Task Following(string clientId, string userId, int limit, int offset, string direction)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            using var client = new RestApiClient(clientId);
+            using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var tableHeaders = new List<TableHeader>

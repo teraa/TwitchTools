@@ -175,7 +175,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
             if (username?.StartsWith('-') != false)
                 Error("Missing channel name");
 
-            using (var client = new RestApiClient(clientId))
+            using (var client = new HelixApiClient(clientId))
             {
                 var res = client.GetUsersAsync(new GetUsersParams { UserLogins = new[] { username } }).GetAwaiter().GetResult();
                 var user = res.Data.FirstOrDefault();

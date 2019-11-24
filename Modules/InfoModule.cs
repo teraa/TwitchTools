@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Twitch.API.KrakenV5;
-using Twitch.API.KrakenV5.Rest;
+using Twitch.API.Kraken;
+using Twitch.API.Kraken.Rest;
 using TwitchTools.Utils;
 
 namespace TwitchTools
@@ -13,7 +13,7 @@ namespace TwitchTools
         static async Task Info(string clientId, string username)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            using var client = new RestApiClient(clientId);
+            using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
             var res = await client.GetUsersAsync(new GetUsersParams { UserLogins = new[] { username } });
             var user = res.Users.FirstOrDefault();
@@ -35,7 +35,7 @@ namespace TwitchTools
         static async Task Info(string clientId, string sortBy, bool? checkNamechanges)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            using var client = new RestApiClient(clientId);
+            using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var logins = GetUsernames();

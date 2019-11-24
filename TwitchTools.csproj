@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Twitch.Net.Core\Twitch.Net.Core.csproj" />
     <ProjectReference Include="..\..\src\Twitch.Net.Irc\Twitch.Net.Irc.csproj" />
     <ProjectReference Include="..\..\src\Twitch.Net.Rest\Twitch.Net.Rest.csproj" />
   </ItemGroup>

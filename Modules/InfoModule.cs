@@ -85,22 +85,20 @@ namespace TwitchTools
             }
             TableUtils.PrintHorizontalDivider(tableHeaders, tableOptions);
 
-            var missing = logins.Except(retrieved.Select(x => x.Login));
-            if (missing.Any())
-            {
-                // TODO: Add option to just print missing names.
-                if (checkNamechanges == null)
-                {
-                    checkNamechanges = ConsoleUtils.GetAnswer($"Missing {missing.Count()} users, check namechanges?", false);
-                    if (checkNamechanges == false)
-                        Console.WriteLine("Abort.");
-                }
+            var missing = logins.Except(retrieved.Select(x => x.Login)).ToList();
+            if (!missing.Any())
+                return;
 
-                if (checkNamechanges == false)
-                    return;
+            Console.WriteLine($"{missing.Count} users not found:");
+            foreach (var user in missing)
+                Console.WriteLine(user);
 
-                throw new NotImplementedException();
-            }
+            checkNamechanges ??= ConsoleUtils.GetAnswer($"Check namechanges?", false);
+
+            if (checkNamechanges == false)
+                return;
+
+            throw new NotImplementedException();
         }
     }
 }

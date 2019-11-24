@@ -4,8 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Twitch.API.KrakenV5;
 using Twitch.API.KrakenV5.Rest;
+using TwitchTools.Utils;
 
-namespace TwitchToolsV2
+namespace TwitchTools
 {
     partial class Program
     {

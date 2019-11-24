@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TwitchToolsV2
+namespace TwitchTools.Utils
 {
     public static class ConsoleUtils
     {

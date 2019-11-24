@@ -2,8 +2,9 @@
 using System.Threading.Tasks;
 using Twitch.Irc;
 using Twitch.Utils;
+using TwitchTools.Utils;
 
-namespace TwitchToolsV2
+namespace TwitchTools
 {
     partial class Program
     {

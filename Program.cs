@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Helix = Twitch.API.Helix;
+using Twitch.API.Helix;
+using Twitch.API.Helix.Rest;
 
-namespace TwitchToolsV2
+namespace TwitchTools
 {
     partial class Program
     {
@@ -174,9 +175,9 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
             if (username?.StartsWith('-') != false)
                 Error("Missing channel name");
 
-            using (var client = new Helix.RestApiClient(clientId))
+            using (var client = new RestApiClient(clientId))
             {
-                var res = client.GetUsersAsync(new Helix.Rest.GetUsersParams { UserLogins = new[] { username } }).GetAwaiter().GetResult();
+                var res = client.GetUsersAsync(new GetUsersParams { UserLogins = new[] { username } }).GetAwaiter().GetResult();
                 var user = res.Data.FirstOrDefault();
 
                 if (user == null)

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TwitchToolsV2
+namespace TwitchTools.Utils
 {
     public class Table
     {

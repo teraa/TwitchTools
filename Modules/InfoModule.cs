@@ -63,6 +63,7 @@ namespace TwitchTools
             {
                 InfoModuleSort.Date => retrievedUsers.OrderBy(x => x.CreatedAt).ToList(),
                 InfoModuleSort.Name => retrievedUsers.OrderBy(x => x.Login).ToList(),
+                null => retrievedUsers,
                 _ => throw new ArgumentException("Invalid argument value", nameof(sortBy))
             };
 

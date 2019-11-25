@@ -45,7 +45,8 @@ namespace TwitchTools
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var logins = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
-                .Distinct(StringComparer.OrdinalIgnoreCase);
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(x => !string.IsNullOrWhiteSpace(x));
 
             IEnumerable<string> remainingUsers = logins.ToList();
             var retrievedUsers = new List<User>();

@@ -11,7 +11,7 @@ namespace TwitchTools
     {
         static async Task BanTool(string login, string token, string channelname, string command, string commandArgs, int limit, int period)
         {
-            var users = ConsoleUtils.GetInputList("Enter usernames:", @"\w+")
+            var users = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();

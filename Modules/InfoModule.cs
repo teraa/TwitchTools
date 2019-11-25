@@ -44,7 +44,7 @@ namespace TwitchTools
             using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var logins = ConsoleUtils.GetInputList("Enter usernames:", @"\w+")
+            var logins = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase);
 
             IEnumerable<string> remainingUsers = logins.ToList();

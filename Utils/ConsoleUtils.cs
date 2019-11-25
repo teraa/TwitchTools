@@ -37,7 +37,7 @@ namespace TwitchTools.Utils
             return string.Equals(answer, "y", StringComparison.OrdinalIgnoreCase);
         }
 
-        public static List<string> GetInputList(string message, string pattern)
+        public static List<string> GetInputList(string message, string splitPattern)
         {
             if (!Console.IsInputRedirected)
                 Console.WriteLine(message);
@@ -45,7 +45,7 @@ namespace TwitchTools.Utils
             var result = new List<string>();
             string line;
             while ((line = Console.ReadLine()) != null)
-                result.AddRange(Regex.Split(line, pattern));
+                result.AddRange(Regex.Split(line, splitPattern));
 
             return result;
         }

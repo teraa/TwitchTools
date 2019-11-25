@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace TwitchTools.Utils
 {
@@ -32,10 +34,20 @@ namespace TwitchTools.Utils
             if (answer.Length == 0)
                 return defaultValue;
 
-            if (string.Equals(answer, "y", StringComparison.OrdinalIgnoreCase))
-                return true;
+            return string.Equals(answer, "y", StringComparison.OrdinalIgnoreCase);
+        }
 
-            return false;
+        public static List<string> GetInputList(string message, string pattern)
+        {
+            if (!Console.IsInputRedirected)
+                Console.WriteLine(message);
+
+            var result = new List<string>();
+            string line;
+            while ((line = Console.ReadLine()) != null)
+                result.AddRange(Regex.Split(line, pattern));
+
+            return result;
         }
     }
 }

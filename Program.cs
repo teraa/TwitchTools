@@ -28,21 +28,21 @@ namespace TwitchTools
             {
                 switch (args[0])
                 {
-                    case "followers":
+                    case nameof(Followers):
                         {
                             ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction);
                             await Followers(clientId, userId, limit, offset, direction);
                         }
                         break;
 
-                    case "following":
+                    case nameof(Following):
                         {
                             ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction);
                             await Following(clientId, userId, limit, offset, direction);
                         }
                         break;
 
-                    case "info":
+                    case nameof(Info):
                         {
                             if (args.Length == 2 && !args[1].StartsWith('-'))
                             {
@@ -57,7 +57,7 @@ namespace TwitchTools
                         }
                         break;
 
-                    case "bantool":
+                    case nameof(BanTool):
                         {
                             ParseBanToolArgs(args.Skip(1), out var login, out var token, out var channel, out var command, out var commandArgs, out var limit, out var period);
                             await BanTool(login, token, channel, command, commandArgs, limit, period);
@@ -85,7 +85,7 @@ namespace TwitchTools
             Console.WriteLine(
 $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
 
-    Modules: followers, following
+    Modules: {nameof(Followers)}, {nameof(Following)}
     Arguments: <channel>
     Options:
         -l, --limit
@@ -95,7 +95,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
         -d, --direction (default: {DefaultFollowDirection})
                 'asc' for ascending order or 'desc' for descending
 
-    Module: info
+    Module: {nameof(Info)}
     Arguments: [username]
     Options:
         -d, --date
@@ -105,7 +105,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
         -c
                 check namechanges
 
-    Module: bantool
+    Module: {nameof(BanTool)}
     Arguments: <channel>
     Options:
         -c, --command

@@ -34,7 +34,7 @@ namespace TwitchTools
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
-            var requestParams = new GetChannelFollowersParams { Direction = direction, Limit = GetLimit(count, limit), Offset = offset };
+            var requestParams = new GetChannelFollowersParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
 
@@ -45,7 +45,7 @@ namespace TwitchTools
             Task<GetChannelFollowersResponse> NextRequest(GetChannelFollowersResponse prev)
             {
                 requestParams.Cursor = prev.Cursor;
-                requestParams.Limit = GetLimit(count, limit);
+                requestParams.Limit = GetNextLimit(count, limit);
                 requestParams.Offset = 0;
                 return client.GetChannelFollowersAsync(userId, requestParams);
             }
@@ -89,7 +89,7 @@ namespace TwitchTools
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
-            var requestParams = new GetUserFollowsParams { Direction = direction, Limit = GetLimit(count, limit), Offset = offset };
+            var requestParams = new GetUserFollowsParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
 
@@ -100,7 +100,7 @@ namespace TwitchTools
             Task<GetUserFollowsResponse> NextRequest(GetUserFollowsResponse prev)
             {
                 requestParams.Offset += requestParams.Limit;
-                requestParams.Limit = GetLimit(count, limit);
+                requestParams.Limit = GetNextLimit(count, limit);
                 return client.GetUserFollowsAsync(userId, requestParams);
             }
             void Perform(GetUserFollowsResponse response)
@@ -115,6 +115,23 @@ namespace TwitchTools
             bool Condition(GetUserFollowsResponse res)
             {
                 return res.Follows.Any() && count < limit;
+            }
+        }
+
+        static int GetNextLimit(int count, int totalLimit)
+        {
+            var result = totalLimit - count;
+            return result > DefaultRequestLimit ? DefaultRequestLimit : result;
+        }
+        static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)
+        {
+            var result = await request();
+            perform?.Invoke(result);
+
+            while (condition(result))
+            {
+                result = await nextRequest(result);
+                perform?.Invoke(result);
             }
         }
     }

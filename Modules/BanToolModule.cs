@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Twitch.Irc;
 using Twitch.Utils;
@@ -10,7 +11,11 @@ namespace TwitchTools
     {
         static async Task BanTool(string login, string token, string channelname, string command, string commandArgs, int limit, int period)
         {
-            var users = GetUsernames();
+            var users = ConsoleUtils.GetInputList("Enter usernames:", @"\w+")
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList();
+
             if (!ConsoleUtils.GetAnswer($"Running command: \"/{command} {{user}} {commandArgs}\"\non {users.Count} users, continue?", true))
             {
                 Console.WriteLine("Abort.");

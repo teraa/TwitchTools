@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Twitch.API.Helix;
 using Twitch.API.Helix.Rest;
@@ -14,6 +13,7 @@ namespace TwitchTools
         private const string EnvToken = "tw_token";
         private const string EnvLogin = "tw_login";
         private const string EnvClientId = "tw_client_id";
+        private const int DefaultRequestLimit = 100;
         private const int DefaultFollowLimit = 100;
         private const string DefaultFollowDirection = "desc";
         private const int DefaultBantoolPeriod = 30;
@@ -99,11 +99,11 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
     Arguments: [username]
     Options:
         -d, --date
-                sort users by date of creation
+                [Flag] sort users by date of creation
         -n, --name
-                sort users by name
+                [Flag] sort users by name
         -c
-                check namechanges
+                check namechanges (true/false)
 
     Module: {nameof(BanTool)}
     Arguments: <channel>
@@ -221,7 +221,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 }
             }
         }
-        static void ParseInfoArgs(IEnumerable<string> args, out string clientId, out string sortBy, out bool? checkNamechanges)
+        static void ParseInfoArgs(IEnumerable<string> args, out string clientId, out InfoModuleSort? sortBy, out bool? checkNamechanges)
         {
             sortBy = null;
             checkNamechanges = null;
@@ -236,14 +236,14 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                     case "d":
                         if (v != null)
                             Error($"Option \"{k}\" does not accept a value.");
-                        sortBy = "date";
+                        sortBy = InfoModuleSort.Date;
                         break;
 
                     case "name":
                     case "n":
                         if (v != null)
                             Error($"Option \"{k}\" does not accept a value.");
-                        sortBy = "name";
+                        sortBy = InfoModuleSort.Name;
                         break;
 
                     case "namechanges":
@@ -330,38 +330,6 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 Error($"Missing login username ({EnvLogin} environment variable or --login option)");
             if (token == null)
                 Error($"Missing token ({EnvToken} environment variable or --token option");
-        }
-
-        static int GetLimit(int count, int totalLimit, int maxLimit = 100)
-        {
-            var res = totalLimit - count;
-            if (res > maxLimit)
-                res = maxLimit;
-
-            return res;
-        }
-        static List<string> GetUsernames()
-        {
-            if (!Console.IsInputRedirected)
-                Console.WriteLine("Enter usernames separated by non-word characters or new lines:");
-
-            var result = new List<string>();
-            string login;
-            while (!string.IsNullOrWhiteSpace(login = Console.ReadLine()))
-                result.AddRange(Regex.Split(login.ToLower(), @"\W+"));
-
-            return result.Distinct().Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
-        }
-        static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)
-        {
-            var result = await request();
-            perform?.Invoke(result);
-
-            while (condition(result))
-            {
-                result = await nextRequest(result);
-                perform?.Invoke(result);
-            }
         }
     }
 }

@@ -10,6 +10,12 @@ namespace TwitchTools
 {
     partial class Program
     {
+        public enum InfoModuleSort
+        {
+            Date,
+            Name
+        }
+
         static async Task Info(string clientId, string username)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -32,33 +38,31 @@ namespace TwitchTools
                 $"Profile Image:    {user.ProfileImageUrl}\n");
         }
 
-        static async Task Info(string clientId, string sortBy, bool? checkNamechanges)
+        static async Task Info(string clientId, InfoModuleSort? sortBy, bool? checkNamechanges)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var logins = GetUsernames();
-            logins.RemoveAll(x => string.IsNullOrWhiteSpace(x));
-            logins = logins.Distinct().ToList();
-            IEnumerable<string> remaining = logins.ToList();
-            var retrieved = new List<User>();
+            var logins = ConsoleUtils.GetInputList("Enter usernames:", @"\w+")
+                .Distinct(StringComparer.OrdinalIgnoreCase);
 
-            const int maxCount = 100;
+            IEnumerable<string> remainingUsers = logins.ToList();
+            var retrievedUsers = new List<User>();
 
-            while (remaining.Any())
+            while (remainingUsers.Any())
             {
-                var p = new GetUsersParams { UserLogins = remaining.Take(maxCount) };
-                var users = (await client.GetUsersAsync(p)).Users;
-                retrieved.AddRange(users);
-                remaining = remaining.Skip(maxCount);
+                var requestParams = new GetUsersParams { UserLogins = remainingUsers.Take(DefaultRequestLimit) };
+                var response = await client.GetUsersAsync(requestParams);
+                retrievedUsers.AddRange(response.Users);
+                remainingUsers = remainingUsers.Skip(DefaultRequestLimit);
             }
 
-            retrieved = sortBy switch
+            retrievedUsers = sortBy switch
             {
-                "date" => retrieved.OrderBy(x => x.CreatedAt).ToList(),
-                "name" => retrieved.OrderBy(x => x.Login).ToList(),
-                _ => retrieved
+                InfoModuleSort.Date => retrievedUsers.OrderBy(x => x.CreatedAt).ToList(),
+                InfoModuleSort.Name => retrievedUsers.OrderBy(x => x.Login).ToList(),
+                _ => throw new ArgumentException("Invalid argument value", nameof(sortBy))
             };
 
             var tableHeaders = new List<TableHeader>
@@ -77,7 +81,7 @@ namespace TwitchTools
             TableUtils.PrintHorizontalDivider(tableHeaders, tableOptions);
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
-            foreach (var user in retrieved)
+            foreach (var user in retrievedUsers)
             {
                 var rowData = new List<string> { user.Login, user.DisplayName, user.Id, user.CreatedAt.ToString(TimestampFormat) };
                 var row = new TableRow(rowData);
@@ -85,7 +89,7 @@ namespace TwitchTools
             }
             TableUtils.PrintHorizontalDivider(tableHeaders, tableOptions);
 
-            var missing = logins.Except(retrieved.Select(x => x.Login)).ToList();
+            var missing = logins.Except(retrievedUsers.Select(x => x.Login)).ToList();
             if (!missing.Any())
                 return;
 

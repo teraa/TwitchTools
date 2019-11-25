@@ -65,7 +65,7 @@ namespace TwitchTools
                         break;
 
                     default:
-                        Error($"Invalid module name: {args[0]}");
+                        Error($"Invalid module name: \"{args[0]}\".");
                         break;
                 }
             }
@@ -173,7 +173,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
 
             var username = args.FirstOrDefault();
             if (username?.StartsWith('-') != false)
-                Error("Missing channel name");
+                Error("Missing channel name.");
 
             using (var client = new HelixApiClient(clientId))
             {
@@ -181,7 +181,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 var user = res.Data.FirstOrDefault();
 
                 if (user == null)
-                    Error($"Could not find channel: {username}");
+                    Error($"Could not find channel: {username}.");
 
                 userId = user.Id;
             }
@@ -196,13 +196,13 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                     case "limit":
                     case "l":
                         if (!int.TryParse(v, out limit) || limit <= 0)
-                            Error($"Limit value must be an integer > 0");
+                            Error($"Option \"{k}\" must have an integer value greater than 0.");
                         break;
 
                     case "offset":
                     case "o":
                         if (!int.TryParse(v, out offset) || offset < 0)
-                            Error("Offset value must be an integer > 0");
+                            Error($"Option \"{k}\" must have an integer value greater than 0.");
                         break;
 
                     case "direction":
@@ -212,11 +212,11 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                         else if (string.Equals(v, "desc", StringComparison.OrdinalIgnoreCase))
                             direction = "desc";
                         else
-                            Error("Direction value must be \"desc\" or \"asc\"");
+                            Error($"Option \"{k}\" must have a value of either \"desc\" or \"asc\".");
                         break;
 
                     default:
-                        Error($"Invalid option \"{k}\"");
+                        Error($"Invalid option: \"{k}\".");
                         break;
                 }
             }
@@ -235,26 +235,26 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                     case "date":
                     case "d":
                         if (v != null)
-                            Error("Date option does not accept a value");
+                            Error($"Option \"{k}\" does not accept a value.");
                         sortBy = "date";
                         break;
 
                     case "name":
                     case "n":
                         if (v != null)
-                            Error("Name option does not accept a value");
+                            Error($"Option \"{k}\" does not accept a value.");
                         sortBy = "name";
                         break;
 
                     case "namechanges":
                     case "c":
                         if (!bool.TryParse(v, out var res))
-                            Error($"Invalid namechange option value: {v}");
+                            Error($"Option \"{k}\" must have a bool value.");
                         checkNamechanges = res;
                         break;
 
                     default:
-                        Error($"Invalid option \"{k}\"");
+                        Error($"Invalid option: \"{k}\".");
                         break;
                 }
             }
@@ -270,7 +270,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
 
             var firstArg = args.FirstOrDefault();
             if (firstArg?.StartsWith('-') != false)
-                Error("Missing channel name");
+                Error("Missing channel name.");
             channelname = firstArg;
             args = args.Skip(1);
 
@@ -282,43 +282,43 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                     case "limit":
                     case "l":
                         if (!int.TryParse(v, out limit) || limit <= 0)
-                            Error($"Option value {k} must be an integer > 0");
+                            Error($"Option \"{k}\" must have an integer value greater than 0.");
                         break;
 
                     case "period":
                     case "p":
                         if (!int.TryParse(v, out period) || period <= 0)
-                            Error($"Option value {k} must be an integer > 0");
+                            Error($"Option \"{k}\" must have an integer value greater than 0.");
                         break;
 
                     case "command":
                     case "c":
                         if (v == null)
-                            Error($"Option {k} must have a value");
+                            Error($"Option \"{k}\" must have a value.");
                         command = v;
                         break;
 
                     case "args":
                     case "a":
                         if (v == null)
-                            Error($"Option {k} must have a value");
+                            Error($"Option \"{k}\" must have a value.");
                         commandArgs = v;
                         break;
 
                     case "login":
                         if (v == null)
-                            Error($"Option {k} must have a value");
+                            Error($"Option \"{k}\" must have a value.");
                         login = v;
                         break;
 
                     case "token":
                         if (v == null)
-                            Error($"Option {k} must have a value");
+                            Error($"Option \"{k}\" must have a value.");
                         token = v;
                         break;
 
                     default:
-                        Error($"Invalid option \"{k}\"");
+                        Error($"Invalid option: \"{k}\".");
                         break;
                 }
             }

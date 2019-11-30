@@ -25,12 +25,10 @@ namespace TwitchTools
                 new TableHeader("ID", 15),
                 new TableHeader("Created at (UTC)", -19),
             };
-
             var tableOptions = new TablePrintOptions
             {
                 Borders = TableBorders.None
             };
-
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
@@ -80,12 +78,10 @@ namespace TwitchTools
                 new TableHeader("ID", 15),
                 new TableHeader("Created at (UTC)", -19),
             };
-
             var tableOptions = new TablePrintOptions
             {
                 Borders = TableBorders.None
             };
-
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;

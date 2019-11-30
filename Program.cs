@@ -28,6 +28,11 @@ namespace TwitchTools
             {
                 switch (args[0])
                 {
+                    case "--help":
+                    case "-h":
+                        PrintUsage();
+                        break;
+
                     case nameof(Followers):
                         {
                             ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction);

@@ -30,7 +30,7 @@ namespace TwitchTools
             await client.ConnectAsync();
             foreach (var user in users)
             {
-                await rateLimiter.Perform<Task>(() => client.SendCommandAsync(channelname, $"/{command} {user} {commandArgs}"));
+                await rateLimiter.PerformAsync<Task>(() => client.SendCommandAsync(channelname, $"/{command} {user} {commandArgs}"));
             }
             await client.DisconnectAsync();
         }

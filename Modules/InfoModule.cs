@@ -95,11 +95,11 @@ namespace TwitchTools
             if (!missing.Any())
                 return;
 
-            Console.WriteLine($"{missing.Count} users not found:");
+            Console.WriteLine($"{missing.Count} users not found:\n");
             foreach (var user in missing)
                 Console.WriteLine(user);
 
-            checkNamechanges ??= ConsoleUtils.GetAnswer($"Check namechanges?", false);
+            checkNamechanges ??= ConsoleUtils.GetAnswer($"\nCheck namechanges?", false);
 
             if (checkNamechanges == false)
                 return;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Twitch.API.Kraken;
-using Twitch.API.Kraken.Rest;
+using Twitch.API.Kraken.Params;
 using TwitchTools.Utils;
 
 namespace TwitchTools

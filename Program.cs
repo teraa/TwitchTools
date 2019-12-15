@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Twitch.API.Helix;
 using Twitch.API.Helix.Params;
-using Twitch.API.Helix.Responses;
 
 namespace TwitchTools
 {

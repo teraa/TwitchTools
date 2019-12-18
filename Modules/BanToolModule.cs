@@ -26,8 +26,8 @@ namespace TwitchTools
             using var client = new TwitchIrcClient(login, token, new TwitchIrcConfig { PingInterval = TimeSpan.FromMinutes(4) });
             client.Log += (s, e) => ConsoleUtils.Write($"IRC: {e.Message}\n", ConsoleColor.DarkCyan);
             client.RawMessageReceived += (s, e) => ConsoleUtils.Write($"> {e.Message}\n", ConsoleColor.DarkYellow);
-            client.RawMessageSent += (s, e) => ConsoleUtils.Write($"< {e.Message}\n", ConsoleColor.DarkGreen);
             await client.ConnectAsync();
+            client.RawMessageSent += (s, e) => ConsoleUtils.Write($"< {e.Message}\n", ConsoleColor.DarkGreen);
             foreach (var user in users)
             {
                 await rateLimiter.PerformAsync<Task>(() => client.SendCommandAsync(channelname, $"/{command} {user} {commandArgs}"));

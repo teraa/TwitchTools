@@ -36,7 +36,7 @@ namespace TwitchTools
             var requestParams = new GetChannelFollowersParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset, Cursor = cursor };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
-            Console.WriteLine();
+            Console.WriteLine($"last cursor: {cursor}");
 
             Task<GetChannelFollowersResponse> Request()
             {
@@ -51,14 +51,18 @@ namespace TwitchTools
             }
             void Perform(GetChannelFollowersResponse response)
             {
-                Console.Write("\r");
+                cursor = response.Cursor;
+
+                if (!Console.IsOutputRedirected)
+                    Console.Write("\r");
                 foreach (var follow in response.Follows)
                 {
                     var rowData = new List<string> { $"{(++count)}:", follow.CreatedAt.ToString(TimestampFormat), follow.User.Login, follow.User.DisplayName, follow.User.Id, follow.User.CreatedAt.ToString(TimestampFormat) };
                     var row = new TableRow(rowData);
                     TableUtils.PrintRow(tableHeaders, row, tableOptions);
                 }
-                Console.Write($"cursor: {response.Cursor}");
+                if (!Console.IsOutputRedirected)
+                    Console.Write($"cursor: {response.Cursor}");
             }
             bool Condition(GetChannelFollowersResponse res)
             {

@@ -35,14 +35,14 @@ namespace TwitchTools
 
                     case nameof(Followers):
                         {
-                            ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction);
-                            await Followers(clientId, userId, limit, offset, direction);
+                            ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction, out var cursor);
+                            await Followers(clientId, userId, limit, offset, direction, cursor);
                         }
                         break;
 
                     case nameof(Following):
                         {
-                            ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction);
+                            ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction, out _);
                             await Following(clientId, userId, limit, offset, direction);
                         }
                         break;
@@ -99,6 +99,8 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 starting offset
         -d, --direction (default: {DefaultFollowDirection})
                 'asc' for ascending order or 'desc' for descending
+            --cursor
+                cursor from where to start fetching ({nameof(Followers)} module only)
 
     Module: {nameof(Info)}
     Arguments: [username]
@@ -169,12 +171,13 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
 
             return clientId;
         }
-        static void ParseFollowArgs(IEnumerable<string> args, out string clientId, out string userId, out int limit, out int offset, out string direction)
+        static void ParseFollowArgs(IEnumerable<string> args, out string clientId, out string userId, out int limit, out int offset, out string direction, out string cursor)
         {
             limit = DefaultFollowLimit;
             offset = 0;
             direction = DefaultFollowDirection;
             clientId = GetClientId();
+            cursor = null;
 
             var username = args.FirstOrDefault();
             if (username?.StartsWith('-') != false)
@@ -218,6 +221,10 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                             direction = "desc";
                         else
                             Error($"Option \"{k}\" must have a value of either \"desc\" or \"asc\".");
+                        break;
+
+                    case "cursor":
+                        cursor = v;
                         break;
 
                     default:

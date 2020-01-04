@@ -11,7 +11,7 @@ namespace TwitchTools
 {
     partial class Program
     {
-        static async Task Followers(string clientId, string userId, int limit, int offset, string direction)
+        static async Task Followers(string clientId, string userId, int limit, int offset, string direction, string cursor)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
@@ -33,7 +33,7 @@ namespace TwitchTools
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
-            var requestParams = new GetChannelFollowersParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset };
+            var requestParams = new GetChannelFollowersParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset, Cursor = cursor };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
 
@@ -50,12 +50,14 @@ namespace TwitchTools
             }
             void Perform(GetChannelFollowersResponse response)
             {
+                Console.Write("\r");
                 foreach (var follow in response.Follows)
                 {
                     var rowData = new List<string> { $"{(++count)}:", follow.CreatedAt.ToString(TimestampFormat), follow.User.Login, follow.User.DisplayName, follow.User.Id, follow.User.CreatedAt.ToString(TimestampFormat) };
                     var row = new TableRow(rowData);
                     TableUtils.PrintRow(tableHeaders, row, tableOptions);
                 }
+                Console.Write($"cursor: {response.Cursor}");
             }
             bool Condition(GetChannelFollowersResponse res)
             {

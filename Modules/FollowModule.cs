@@ -36,7 +36,7 @@ namespace TwitchTools
             var requestParams = new GetChannelFollowersParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset, Cursor = cursor };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
-            Console.WriteLine($"last cursor: {cursor}");
+            Console.WriteLine($"\nlast cursor: {cursor}");
 
             Task<GetChannelFollowersResponse> Request()
             {

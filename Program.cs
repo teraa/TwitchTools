@@ -64,8 +64,8 @@ namespace TwitchTools
 
                     case nameof(BanTool):
                         {
-                            ParseBanToolArgs(args.Skip(1), out var login, out var token, out var channel, out var command, out var commandArgs, out var limit, out var period);
-                            await BanTool(login, token, channel, command, commandArgs, limit, period);
+                            ParseBanToolArgs(args.Skip(1), out var login, out var token, out var channel, out var command, out var commandArgs, out var limit, out var period, out var wait);
+                            await BanTool(login, token, channel, command, commandArgs, limit, period, wait);
                         }
                         break;
 
@@ -123,6 +123,8 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 maximum number of actions per period (default: {DefaultBantoolLimit})
         -p, --period
                 period (seconds) in which a limited number of actions can be performed (default: {DefaultBantoolPeriod})
+        -w, --wait
+                [Flag] wait for a keypress to terminate the program
             --login
                 login username (default: {EnvLogin} environment variable)
             --token
@@ -271,7 +273,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 }
             }
         }
-        static void ParseBanToolArgs(IEnumerable<string> args, out string login, out string token, out string channelname, out string command, out string commandArgs, out int limit, out int period)
+        static void ParseBanToolArgs(IEnumerable<string> args, out string login, out string token, out string channelname, out string command, out string commandArgs, out int limit, out int period, out bool wait)
         {
             command = DefaultBantoolCommand;
             commandArgs = null;
@@ -279,6 +281,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
             token = null;
             limit = DefaultBantoolLimit;
             period = DefaultBantoolPeriod;
+            wait = false;
 
             var firstArg = args.FirstOrDefault();
             if (firstArg?.StartsWith('-') != false)
@@ -327,6 +330,13 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                         if (v == null)
                             Error($"Option \"{k}\" must have a value.");
                         token = v;
+                        break;
+
+                    case "wait":
+                    case "w":
+                        if (v != null)
+                            Error($"Option \"{k}\" does not accept a value.");
+                        wait = true;
                         break;
 
                     default:

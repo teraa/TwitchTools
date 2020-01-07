@@ -9,7 +9,7 @@ namespace TwitchTools
 {
     partial class Program
     {
-        static async Task BanTool(string login, string token, string channelname, string command, string commandArgs, int limit, int period)
+        static async Task BanTool(string login, string token, string channelname, string command, string commandArgs, int limit, int period, bool wait)
         {
             var users = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -32,6 +32,14 @@ namespace TwitchTools
             {
                 await rateLimiter.PerformAsync<Task>(() => client.SendCommandAsync(channelname, $"/{command} {user} {commandArgs}"));
             }
+
+            if (wait && !Console.IsInputRedirected)
+            {
+                var exitKey = new ConsoleKeyInfo('q', ConsoleKey.Q, shift: false, alt: false, control: false);
+                Console.WriteLine($"Press {exitKey.KeyChar} to quit.");
+                while (Console.ReadKey(true) != exitKey) ;
+            }
+
             await client.DisconnectAsync();
         }
     }

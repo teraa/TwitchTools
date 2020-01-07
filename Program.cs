@@ -123,8 +123,8 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 maximum number of actions per period (default: {DefaultBantoolLimit})
         -p, --period
                 period (seconds) in which a limited number of actions can be performed (default: {DefaultBantoolPeriod})
-        -w, --wait
-                [Flag] wait for a keypress to terminate the program
+        -n, --no-wait
+                [Flag] don't wait for a keypress to terminate the program after executing all commands.
             --login
                 login username (default: {EnvLogin} environment variable)
             --token
@@ -281,7 +281,7 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
             token = null;
             limit = DefaultBantoolLimit;
             period = DefaultBantoolPeriod;
-            wait = false;
+            wait = true;
 
             var firstArg = args.FirstOrDefault();
             if (firstArg?.StartsWith('-') != false)
@@ -332,11 +332,11 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                         token = v;
                         break;
 
-                    case "wait":
-                    case "w":
+                    case "no-wait":
+                    case "n":
                         if (v != null)
                             Error($"Option \"{k}\" does not accept a value.");
-                        wait = true;
+                        wait = false;
                         break;
 
                     default:

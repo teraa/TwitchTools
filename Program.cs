@@ -181,11 +181,15 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
             clientId = GetClientId();
             cursor = null;
 
+            var token = Environment.GetEnvironmentVariable(EnvToken);
+            if (token == null)
+                Error($"Missing token ({EnvToken} environment variable)");
+
             var username = args.FirstOrDefault();
             if (username?.StartsWith('-') != false)
                 Error("Missing channel name.");
 
-            using (var client = new HelixApiClient(clientId))
+            using (var client = new HelixApiClient(clientId, token))
             {
                 var res = client.GetUsersAsync(new GetUsersParams { UserLogins = new[] { username } }).GetAwaiter().GetResult();
                 var user = res.Data.FirstOrDefault();

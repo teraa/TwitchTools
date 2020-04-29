@@ -56,8 +56,8 @@ namespace TwitchTools
                             }
                             else
                             {
-                                ParseInfoArgs(args.Skip(1), out var clientId, out var sortBy, out var checkNamechanges);
-                                await Info(clientId, sortBy, checkNamechanges);
+                                ParseInfoArgs(args.Skip(1), out var clientId, out var sortBy);
+                                await Info(clientId, sortBy);
                             }
                         }
                         break;
@@ -109,8 +109,6 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 [Flag] sort users by date of creation
         -n, --name
                 [Flag] sort users by name
-        -c
-                check namechanges (true/false)
 
     Module: {nameof(BanTool)}
     Arguments: <channel>
@@ -239,10 +237,9 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                 }
             }
         }
-        static void ParseInfoArgs(IEnumerable<string> args, out string clientId, out InfoModuleSort? sortBy, out bool? checkNamechanges)
+        static void ParseInfoArgs(IEnumerable<string> args, out string clientId, out InfoModuleSort? sortBy)
         {
             sortBy = null;
-            checkNamechanges = null;
             clientId = GetClientId();
 
             var dict = MapArgs(args);
@@ -262,13 +259,6 @@ $@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
                         if (v != null)
                             Error($"Option \"{k}\" does not accept a value.");
                         sortBy = InfoModuleSort.Name;
-                        break;
-
-                    case "namechanges":
-                    case "c":
-                        if (!bool.TryParse(v, out var res))
-                            Error($"Option \"{k}\" must have a bool value.");
-                        checkNamechanges = res;
                         break;
 
                     default:

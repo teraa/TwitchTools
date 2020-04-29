@@ -25,8 +25,6 @@ Options:
             [Flag] sort users by date of creation
     -n, --name
             [Flag] sort users by name
-    -c
-            check namechanges (true/false)
 
 Module: BanTool
 Arguments: <channel>

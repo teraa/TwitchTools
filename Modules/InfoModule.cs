@@ -38,7 +38,7 @@ namespace TwitchTools
                 $"Profile Image:    {user.ProfileImageUrl}\n");
         }
 
-        static async Task Info(string clientId, InfoModuleSort? sortBy, bool? checkNamechanges)
+        static async Task Info(string clientId, InfoModuleSort? sortBy)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
@@ -92,19 +92,12 @@ namespace TwitchTools
             TableUtils.PrintHorizontalDivider(tableHeaders, tableOptions);
 
             var missing = logins.Except(retrievedUsers.Select(x => x.Login)).ToList();
-            if (!missing.Any())
-                return;
-
-            Console.WriteLine($"{missing.Count} users not found:\n");
-            foreach (var user in missing)
-                Console.WriteLine(user);
-
-            checkNamechanges ??= ConsoleUtils.GetAnswer($"\nCheck namechanges?", false);
-
-            if (checkNamechanges == false)
-                return;
-
-            throw new NotImplementedException();
+            if (missing.Any())
+            {
+                Console.WriteLine($"{missing.Count} users not found:\n");
+                foreach (var user in missing)
+                    Console.WriteLine(user);
+            }
         }
     }
 }

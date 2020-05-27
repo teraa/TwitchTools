@@ -91,7 +91,9 @@ namespace TwitchTools
             }
             TableUtils.PrintHorizontalDivider(tableHeaders, tableOptions);
 
-            var missing = logins.Except(retrievedUsers.Select(x => x.Login)).ToList();
+            var missing = logins.Except(
+                retrievedUsers.Select(x => x.Login),
+                StringComparer.OrdinalIgnoreCase).ToList();
             if (missing.Any())
             {
                 Console.WriteLine($"{missing.Count} users not found:\n");

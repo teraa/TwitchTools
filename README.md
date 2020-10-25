@@ -5,6 +5,10 @@ Command line tools for Twitch
 Usage:
   TwitchTools [options] [command]
 
+Options:
+  --version         Show version information
+  -?, -h, --help    Show help and usage information
+
 Commands:
   followers <channel>                        get a list of channel followers
   following <channel>                        get a list of channels the user is following

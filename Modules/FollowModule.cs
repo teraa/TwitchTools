@@ -11,15 +11,41 @@ namespace TwitchTools
 {
     partial class Program
     {
-        static async Task Followers(string clientId, string userId, int limit, int offset, string direction, string cursor)
+        static async Task<string> GetUserId(string username)
         {
+            var clientId = GetEnvironmentVariableOrError(EnvTokenClientId);
+            var token = GetEnvironmentVariableOrError(EnvToken);
+            using var client = new Twitch.API.Helix.HelixApiClient(clientId, token);
+            var res = await client.GetUsersAsync(new Twitch.API.Helix.Params.GetUsersParams { UserLogins = new[] { username } });
+            var user = res.Data.FirstOrDefault();
+
+            if (user == null)
+                Error($"Could not find channel: {username}.");
+
+            return user.Id;
+        }
+
+        public class FollowersArguments
+        {
+            public string Channel { get; set; }
+            public int Limit { get; set; }
+            public int Offset { get; set; }
+            public Direction Direction { get; set; }
+            public string Cursor { get; set; }
+        }
+
+        static async Task Followers(FollowersArguments args)
+        {
+            var userId = await GetUserId(args.Channel);
+            var clientId = GetEnvironmentVariableOrError(EnvClientId);
+
 #pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var tableHeaders = new List<TableHeader>
             {
-                new TableHeader("", (int)Math.Ceiling(Math.Log10(limit + 1)) + 1),
+                new TableHeader("", (int)Math.Ceiling(Math.Log10(args.Limit + 1)) + 1),
                 new TableHeader("Followed at (UTC)", -19),
                 new TableHeader("Name", -25),
                 new TableHeader("Display Name", -25),
@@ -33,12 +59,18 @@ namespace TwitchTools
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
-            var requestParams = new GetChannelFollowersParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset, Cursor = cursor };
+            var requestParams = new GetChannelFollowersParams
+            {
+                Direction = args.Direction.ToString().ToLower(),
+                Limit = GetNextLimit(count, args.Limit),
+                Offset = args.Offset,
+                Cursor = args.Cursor
+            };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
 
             if (Console.IsOutputRedirected)
-                Console.WriteLine($"cursor: {cursor}");
+                Console.WriteLine($"cursor: {args.Cursor}");
             else
                 Console.WriteLine();
 
@@ -50,13 +82,13 @@ namespace TwitchTools
             Task<GetChannelFollowersResponse> NextRequest(GetChannelFollowersResponse prev)
             {
                 requestParams.Cursor = prev.Cursor;
-                requestParams.Limit = GetNextLimit(count, limit);
+                requestParams.Limit = GetNextLimit(count, args.Limit);
                 requestParams.Offset = 0;
                 return client.GetChannelFollowersAsync(userId, requestParams);
             }
             void Perform(GetChannelFollowersResponse response)
             {
-                cursor = response.Cursor;
+                args.Cursor = response.Cursor;
 
                 if (!Console.IsOutputRedirected)
                     Console.Write("\r");
@@ -71,20 +103,31 @@ namespace TwitchTools
             }
             bool Condition(GetChannelFollowersResponse res)
             {
-                return !string.IsNullOrEmpty(res.Cursor) && count < limit;
+                return !string.IsNullOrEmpty(res.Cursor) && count < args.Limit;
             }
 
         }
 
-        static async Task Following(string clientId, string userId, int limit, int offset, string direction)
+        public class FollowingArguments
         {
+            public string Channel { get; set; }
+            public int Limit { get; set; }
+            public int Offset { get; set; }
+            public Direction Direction { get; set; }
+        }
+
+        static async Task Following(FollowingArguments args)
+        {
+            var userId = await GetUserId(args.Channel);
+            var clientId = GetEnvironmentVariableOrError(EnvClientId);
+
 #pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var tableHeaders = new List<TableHeader>
             {
-                new TableHeader("", (int)Math.Ceiling(Math.Log10(limit + 1)) + 1),
+                new TableHeader("", (int)Math.Ceiling(Math.Log10(args.Limit + 1)) + 1),
                 new TableHeader("Followed at (UTC)", -19),
                 new TableHeader("Name", -25),
                 new TableHeader("Display Name", -25),
@@ -98,7 +141,12 @@ namespace TwitchTools
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
-            var requestParams = new GetUserFollowsParams { Direction = direction, Limit = GetNextLimit(count, limit), Offset = offset };
+            var requestParams = new GetUserFollowsParams
+            {
+                Direction = args.Direction.ToString().ToLower(),
+                Limit = GetNextLimit(count, args.Limit),
+                Offset = args.Offset
+            };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
 
@@ -109,7 +157,7 @@ namespace TwitchTools
             Task<GetUserFollowsResponse> NextRequest(GetUserFollowsResponse prev)
             {
                 requestParams.Offset += requestParams.Limit;
-                requestParams.Limit = GetNextLimit(count, limit);
+                requestParams.Limit = GetNextLimit(count, args.Limit);
                 return client.GetUserFollowsAsync(userId, requestParams);
             }
             void Perform(GetUserFollowsResponse response)
@@ -123,7 +171,7 @@ namespace TwitchTools
             }
             bool Condition(GetUserFollowsResponse res)
             {
-                return res.Follows.Any() && count < limit;
+                return res.Follows.Any() && count < args.Limit;
             }
         }
 

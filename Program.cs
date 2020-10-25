@@ -1,83 +1,126 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Linq;
-using System.Threading.Tasks;
-using Twitch.API.Helix;
-using Twitch.API.Helix.Params;
+using TwitchTools.Utils;
 
 namespace TwitchTools
 {
+    public enum Direction
+    {
+        Asc,
+        Desc
+    }
+
+    public enum InfoSort
+    {
+        None,
+        Date,
+        Name
+    }
+
     partial class Program
     {
         private const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
-        private const string EnvToken = "tw_token";
-        private const string EnvLogin = "tw_login";
-        private const string EnvClientId = "tw_client_id";
+        private const string EnvToken = "TW_TOKEN";
+        private const string EnvLogin = "TW_LOGIN";
+        private const string EnvTokenClientId = "TW_TOKEN_CLIENT_ID"; // Client ID used to generate the token
+        private const string EnvClientId = "TW_CLIENT_ID";
         private const int DefaultRequestLimit = 100;
         private const int DefaultFollowLimit = 100;
-        private const string DefaultFollowDirection = "desc";
+        private const Direction DefaultFollowDirection = Direction.Desc;
         private const int DefaultBantoolPeriod = 30;
         private const int DefaultBantoolLimit = 95;
         private const string DefaultBantoolCommand = "ban";
 
         static void Main(string[] args)
-            => MainAsync(args).GetAwaiter().GetResult();
-        static async Task MainAsync(string[] args)
         {
-            if (args.Any())
+            var rootCommand = new RootCommand();
+
+            var followersCommand = new Command("followers")
             {
-                switch (args[0])
-                {
-                    case "--help":
-                    case "-h":
-                        PrintUsage();
-                        break;
+                new Argument<string>("channel"),
+                new Option<int>(
+                    aliases: new[] { "-l", "--limit" },
+                    getDefaultValue: () => DefaultFollowLimit,
+                    description: "number of users to fetch"),
+                new Option<int>(
+                    aliases: new[] { "-o", "--offset" }, "starting offset"),
+                new Option<Direction>(
+                    aliases: new[] { "--direction" },
+                    getDefaultValue: () => DefaultFollowDirection),
+                new Option<string>(
+                    aliases: new[] { "--cursor" },
+                    description: "cursor from where to start fetching")
+            };
+            followersCommand.Handler = CommandHandler.Create<FollowersArguments>(Followers);
+            rootCommand.AddCommand(followersCommand);
 
-                    case nameof(Followers):
-                        {
-                            ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction, out var cursor);
-                            await Followers(clientId, userId, limit, offset, direction, cursor);
-                        }
-                        break;
-
-                    case nameof(Following):
-                        {
-                            ParseFollowArgs(args.Skip(1), out var clientId, out var userId, out var limit, out var offset, out var direction, out _);
-                            await Following(clientId, userId, limit, offset, direction);
-                        }
-                        break;
-
-                    case nameof(Info):
-                        {
-                            if (args.Length == 2 && !args[1].StartsWith('-'))
-                            {
-                                var clientId = GetClientId();
-                                await Info(clientId, args[1]);
-                            }
-                            else
-                            {
-                                ParseInfoArgs(args.Skip(1), out var clientId, out var sortBy);
-                                await Info(clientId, sortBy);
-                            }
-                        }
-                        break;
-
-                    case nameof(BanTool):
-                        {
-                            ParseBanToolArgs(args.Skip(1), out var login, out var token, out var channel, out var command, out var commandArgs, out var limit, out var period, out var wait);
-                            await BanTool(login, token, channel, command, commandArgs, limit, period, wait);
-                        }
-                        break;
-
-                    default:
-                        Error($"Invalid module name: \"{args[0]}\".");
-                        break;
-                }
-            }
-            else
+            var followingCommand = new Command("following")
             {
-                PrintUsage();
-            }
+                new Argument<string>("channel"),
+                new Option<int>(
+                    aliases: new[] { "-l", "--limit" },
+                    getDefaultValue: () => DefaultFollowLimit, description: "number of users to fetch"),
+                new Option<int>(
+                    aliases: new[] { "-o", "--offset" },
+                    description: "starting offset"),
+                new Option<Direction>(
+                    aliases: new[] { "--direction" },
+                    getDefaultValue: () => DefaultFollowDirection)
+            };
+            followingCommand.Handler = CommandHandler.Create<FollowingArguments>(Following);
+            rootCommand.AddCommand(followingCommand);
+
+            var infoCommand = new Command("info")
+            {
+                new Argument<IEnumerable<string>>("username"),
+                new Option<InfoSort>(
+                    aliases: new[] { "-s", "--sort" },
+                    getDefaultValue: () => InfoSort.None,
+                    description: "sort results by")
+            };
+            infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, InfoSort>(Info);
+            rootCommand.AddCommand(infoCommand);
+
+            var banToolCommand = new Command("bantool")
+            {
+                new Argument<string>(
+                    name: "channel",
+                    description: "channel to execute the commands in"),
+                new Argument<string>(
+                    name: "command",
+                    getDefaultValue: () => DefaultBantoolCommand,
+                    description: "command to execute"),
+                new Argument<string>(
+                    name: "arguments",
+                    getDefaultValue: () => "",
+                    description: "command arguments"),
+                new Option<int>(
+                    aliases: new[] { "-l", "--limit" },
+                    getDefaultValue: () => DefaultBantoolLimit,
+                    description: "maximum number of action per period"),
+                new Option<int>(
+                    aliases: new[] { "-p", "--period" },
+                    getDefaultValue: () => DefaultBantoolPeriod,
+                    description: "period (in seconds) in which a limited number of actions can be performed"),
+                new Option<bool>(
+                    aliases: new[] { "-w", "--wait" },
+                    getDefaultValue: () => true,
+                    description: "wait for keypress to terminate the program after executing all the commands"),
+                new Option<string>(
+                    aliases: new[] { "--login" },
+                    description: $"login username"),
+                new Option<string>(
+                    aliases: new[] { "--token" },
+                    description: $"OAuth token")
+            };
+            banToolCommand.Handler = CommandHandler.Create<BanToolArguments>(BanTool);
+            rootCommand.AddCommand(banToolCommand);
+
+            rootCommand.Invoke(args);
         }
 
         static void Error(string message)
@@ -85,267 +128,13 @@ namespace TwitchTools
             Console.Error.WriteLine($"Error: {message}\n");
             Environment.Exit(1);
         }
-        static void PrintUsage()
+
+        static string GetEnvironmentVariableOrError(string key)
         {
-            Console.WriteLine(
-$@"Usage: {AppDomain.CurrentDomain.FriendlyName} [MODULE] [OPTION]...
-
-    Modules: {nameof(Followers)}, {nameof(Following)}
-    Arguments: <channel>
-    Options:
-        -l, --limit
-                number of users to fetch (default: {DefaultFollowLimit})
-        -o, --offset
-                starting offset
-        -d, --direction (default: {DefaultFollowDirection})
-                'asc' for ascending order or 'desc' for descending
-            --cursor
-                cursor from where to start fetching ({nameof(Followers)} module only)
-
-    Module: {nameof(Info)}
-    Arguments: [username]
-    Options:
-        -d, --date
-                [Flag] sort users by date of creation
-        -n, --name
-                [Flag] sort users by name
-
-    Module: {nameof(BanTool)}
-    Arguments: <channel>
-    Options:
-        -c, --command
-                command (default: {DefaultBantoolCommand})
-        -a, --args
-                command args
-        -l, --limit
-                maximum number of actions per period (default: {DefaultBantoolLimit})
-        -p, --period
-                period (seconds) in which a limited number of actions can be performed (default: {DefaultBantoolPeriod})
-        -n, --no-wait
-                [Flag] don't wait for a keypress to terminate the program after executing all commands.
-            --login
-                login username (default: {EnvLogin} environment variable)
-            --token
-                oauth token (default: {EnvToken} environment variable)"
-            );
-        }
-
-        static Dictionary<string, string> MapArgs(IEnumerable<string> args)
-        {
-            var res = new Dictionary<string, string>();
-
-            if (!(args is IList<string> list))
-                list = args.ToList();
-
-            for (int i = 0; i < list.Count; i++)
-            {
-                var key = list[i];
-                if (key.Length == 2 && key[0] == '-' && key[1] != '-')
-                    key = key.Substring(1);
-                else if (key.StartsWith("--"))
-                    key = key.Substring(2);
-                else
-                    throw new ArgumentException($"Unknown option: {list[i]}");
-
-                string value = null;
-                if (i < list.Count - 1)
-                {
-                    var nextArg = list[i + 1];
-                    if (nextArg.Length == 0 || nextArg[0] != '-')
-                    {
-                        value = nextArg;
-                        i++;
-                    }
-                }
-                res[key] = value;
-            }
-
-            return res;
-        }
-
-        static string GetClientId()
-        {
-            var clientId = Environment.GetEnvironmentVariable(EnvClientId);
-            if (clientId == null)
-                Error($"Missing client ID ({EnvClientId} environment variable)");
-
-            return clientId;
-        }
-        static void ParseFollowArgs(IEnumerable<string> args, out string clientId, out string userId, out int limit, out int offset, out string direction, out string cursor)
-        {
-            limit = DefaultFollowLimit;
-            offset = 0;
-            direction = DefaultFollowDirection;
-            clientId = GetClientId();
-            cursor = null;
-
-            var token = Environment.GetEnvironmentVariable(EnvToken);
-            if (token == null)
-                Error($"Missing token ({EnvToken} environment variable)");
-
-            var username = args.FirstOrDefault();
-            if (username?.StartsWith('-') != false)
-                Error("Missing channel name.");
-
-            using (var client = new HelixApiClient(clientId, token))
-            {
-                var res = client.GetUsersAsync(new GetUsersParams { UserLogins = new[] { username } }).GetAwaiter().GetResult();
-                var user = res.Data.FirstOrDefault();
-
-                if (user == null)
-                    Error($"Could not find channel: {username}.");
-
-                userId = user.Id;
-            }
-
-            args = args.Skip(1);
-
-            var dict = MapArgs(args);
-            foreach (var (k, v) in dict)
-            {
-                switch (k)
-                {
-                    case "limit":
-                    case "l":
-                        if (!int.TryParse(v, out limit) || limit <= 0)
-                            Error($"Option \"{k}\" must have an integer value greater than 0.");
-                        break;
-
-                    case "offset":
-                    case "o":
-                        if (!int.TryParse(v, out offset) || offset < 0)
-                            Error($"Option \"{k}\" must have an integer value greater than 0.");
-                        break;
-
-                    case "direction":
-                    case "d":
-                        if (string.Equals(v, "asc", StringComparison.OrdinalIgnoreCase))
-                            direction = "asc";
-                        else if (string.Equals(v, "desc", StringComparison.OrdinalIgnoreCase))
-                            direction = "desc";
-                        else
-                            Error($"Option \"{k}\" must have a value of either \"desc\" or \"asc\".");
-                        break;
-
-                    case "cursor":
-                        cursor = v;
-                        break;
-
-                    default:
-                        Error($"Invalid option: \"{k}\".");
-                        break;
-                }
-            }
-        }
-        static void ParseInfoArgs(IEnumerable<string> args, out string clientId, out InfoModuleSort? sortBy)
-        {
-            sortBy = null;
-            clientId = GetClientId();
-
-            var dict = MapArgs(args);
-            foreach (var (k, v) in dict)
-            {
-                switch (k)
-                {
-                    case "date":
-                    case "d":
-                        if (v != null)
-                            Error($"Option \"{k}\" does not accept a value.");
-                        sortBy = InfoModuleSort.Date;
-                        break;
-
-                    case "name":
-                    case "n":
-                        if (v != null)
-                            Error($"Option \"{k}\" does not accept a value.");
-                        sortBy = InfoModuleSort.Name;
-                        break;
-
-                    default:
-                        Error($"Invalid option: \"{k}\".");
-                        break;
-                }
-            }
-        }
-        static void ParseBanToolArgs(IEnumerable<string> args, out string login, out string token, out string channelname, out string command, out string commandArgs, out int limit, out int period, out bool wait)
-        {
-            command = DefaultBantoolCommand;
-            commandArgs = null;
-            login = null;
-            token = null;
-            limit = DefaultBantoolLimit;
-            period = DefaultBantoolPeriod;
-            wait = true;
-
-            var firstArg = args.FirstOrDefault();
-            if (firstArg?.StartsWith('-') != false)
-                Error("Missing channel name.");
-            channelname = firstArg;
-            args = args.Skip(1);
-
-            var dict = MapArgs(args);
-            foreach (var (k, v) in dict)
-            {
-                switch (k)
-                {
-                    case "limit":
-                    case "l":
-                        if (!int.TryParse(v, out limit) || limit <= 0)
-                            Error($"Option \"{k}\" must have an integer value greater than 0.");
-                        break;
-
-                    case "period":
-                    case "p":
-                        if (!int.TryParse(v, out period) || period <= 0)
-                            Error($"Option \"{k}\" must have an integer value greater than 0.");
-                        break;
-
-                    case "command":
-                    case "c":
-                        if (v == null)
-                            Error($"Option \"{k}\" must have a value.");
-                        command = v;
-                        break;
-
-                    case "args":
-                    case "a":
-                        if (v == null)
-                            Error($"Option \"{k}\" must have a value.");
-                        commandArgs = v;
-                        break;
-
-                    case "login":
-                        if (v == null)
-                            Error($"Option \"{k}\" must have a value.");
-                        login = v;
-                        break;
-
-                    case "token":
-                        if (v == null)
-                            Error($"Option \"{k}\" must have a value.");
-                        token = v;
-                        break;
-
-                    case "no-wait":
-                    case "n":
-                        if (v != null)
-                            Error($"Option \"{k}\" does not accept a value.");
-                        wait = false;
-                        break;
-
-                    default:
-                        Error($"Invalid option: \"{k}\".");
-                        break;
-                }
-            }
-
-            login ??= Environment.GetEnvironmentVariable(EnvLogin);
-            token ??= Environment.GetEnvironmentVariable(EnvToken);
-
-            if (login == null)
-                Error($"Missing login username ({EnvLogin} environment variable or --login option)");
-            if (token == null)
-                Error($"Missing token ({EnvToken} environment variable or --token option");
+            var value = Environment.GetEnvironmentVariable(key);
+            if (value is null)
+                Error($"Missing {key} environment variable.");
+            return value;
         }
     }
 }

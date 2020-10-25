@@ -3,24 +3,9 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
-using System.Linq;
-using TwitchTools.Utils;
 
 namespace TwitchTools
 {
-    public enum Direction
-    {
-        Asc,
-        Desc
-    }
-
-    public enum InfoSort
-    {
-        None,
-        Date,
-        Name
-    }
-
     partial class Program
     {
         private const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
@@ -39,6 +24,7 @@ namespace TwitchTools
         {
             var rootCommand = new RootCommand();
 
+            #region followers
             var followersCommand = new Command(
                 name: "followers",
                 description: "get a list of channel followers")
@@ -59,7 +45,8 @@ namespace TwitchTools
             };
             followersCommand.Handler = CommandHandler.Create<FollowersArguments>(Followers);
             rootCommand.AddCommand(followersCommand);
-
+            #endregion
+            #region following
             var followingCommand = new Command(
                 name: "following",
                 description: "get a list of channels the user is following")
@@ -77,7 +64,8 @@ namespace TwitchTools
             };
             followingCommand.Handler = CommandHandler.Create<FollowingArguments>(Following);
             rootCommand.AddCommand(followingCommand);
-
+            #endregion
+            #region info
             var infoCommand = new Command(
                 name: "info",
                 description: "print user info")
@@ -90,7 +78,8 @@ namespace TwitchTools
             };
             infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, InfoSort>(Info);
             rootCommand.AddCommand(infoCommand);
-
+            #endregion
+            #region bantool
             var banToolCommand = new Command(
                 name: "bantool",
                 description: "execute commands in a channel for each specified user")
@@ -127,17 +116,18 @@ namespace TwitchTools
             };
             banToolCommand.Handler = CommandHandler.Create<BanToolArguments>(BanTool);
             rootCommand.AddCommand(banToolCommand);
+            #endregion
 
             rootCommand.Invoke(args);
         }
 
-        static void Error(string message)
+        public static void Error(string message)
         {
             Console.Error.WriteLine($"Error: {message}\n");
             Environment.Exit(1);
         }
 
-        static string GetEnvironmentVariableOrError(string key)
+        public static string GetEnvironmentVariableOrError(string key)
         {
             var value = Environment.GetEnvironmentVariable(key);
             if (value is null)

@@ -10,11 +10,13 @@ namespace TwitchTools
 {
     partial class Program
     {
-        public enum InfoModuleSort
+        public enum InfoSort
         {
+            None,
             Date,
             Name
         }
+
         static async Task Info(IEnumerable<string> username, InfoSort sort)
         {
             username ??= ConsoleUtils.GetInputList("Enter usernames:", @"\W+")

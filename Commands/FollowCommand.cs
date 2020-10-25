@@ -11,6 +11,12 @@ namespace TwitchTools
 {
     partial class Program
     {
+        public enum Direction
+        {
+            Asc,
+            Desc
+        }
+
         static async Task<string> GetUserId(string username)
         {
             var clientId = GetEnvironmentVariableOrError(EnvTokenClientId);

@@ -39,7 +39,9 @@ namespace TwitchTools
         {
             var rootCommand = new RootCommand();
 
-            var followersCommand = new Command("followers")
+            var followersCommand = new Command(
+                name: "followers",
+                description: "get a list of channel followers")
             {
                 new Argument<string>("channel"),
                 new Option<int>(
@@ -58,7 +60,9 @@ namespace TwitchTools
             followersCommand.Handler = CommandHandler.Create<FollowersArguments>(Followers);
             rootCommand.AddCommand(followersCommand);
 
-            var followingCommand = new Command("following")
+            var followingCommand = new Command(
+                name: "following",
+                description: "get a list of channels the user is following")
             {
                 new Argument<string>("channel"),
                 new Option<int>(
@@ -74,7 +78,9 @@ namespace TwitchTools
             followingCommand.Handler = CommandHandler.Create<FollowingArguments>(Following);
             rootCommand.AddCommand(followingCommand);
 
-            var infoCommand = new Command("info")
+            var infoCommand = new Command(
+                name: "info",
+                description: "print user info")
             {
                 new Argument<IEnumerable<string>>("username"),
                 new Option<InfoSort>(
@@ -85,7 +91,9 @@ namespace TwitchTools
             infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, InfoSort>(Info);
             rootCommand.AddCommand(infoCommand);
 
-            var banToolCommand = new Command("bantool")
+            var banToolCommand = new Command(
+                name: "bantool",
+                description: "execute commands in a channel for each specified user")
             {
                 new Argument<string>(
                     name: "channel",

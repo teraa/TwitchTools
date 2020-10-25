@@ -44,10 +44,7 @@ namespace TwitchTools
         {
             var userId = await GetUserId(args.Channel);
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-
-#pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
-#pragma warning restore CS0618 // Type or member is obsolete
 
             var tableHeaders = new List<TableHeader>
             {
@@ -126,10 +123,7 @@ namespace TwitchTools
         {
             var userId = await GetUserId(args.Channel);
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-
-#pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
-#pragma warning restore CS0618 // Type or member is obsolete
 
             var tableHeaders = new List<TableHeader>
             {

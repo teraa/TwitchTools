@@ -32,10 +32,7 @@ namespace TwitchTools
         static async Task InfoSingle(string username)
         {
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-
-#pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
-#pragma warning restore CS0618 // Type or member is obsolete
 
             var res = await client.GetUsersAsync(new GetUsersParams { UserLogins = new[] { username } });
             var user = res.Users.FirstOrDefault();
@@ -57,10 +54,7 @@ namespace TwitchTools
         static async Task InfoMultiple(IEnumerable<string> usernames, InfoSort sort)
         {
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-
-#pragma warning disable CS0618 // Type or member is obsolete
             using var client = new KrakenApiClient(clientId);
-#pragma warning restore CS0618 // Type or member is obsolete
 
             IEnumerable<string> remainingUsers = usernames.ToList();
             var retrievedUsers = new List<User>();

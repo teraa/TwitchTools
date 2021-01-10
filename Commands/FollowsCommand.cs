@@ -51,11 +51,13 @@ namespace TwitchTools
             };
 
             int count = 0;
+            string lastCursor = args.Cursor;
+
             var firstRequestArgs = new GetFollowsArgs
             {
                 FromId = user.fromId,
                 ToId = user.toId,
-                After = args.Cursor,
+                After = lastCursor,
                 First = GetNextLimit(count, args.Limit),
             };
 
@@ -80,13 +82,15 @@ namespace TwitchTools
                 _ => throw new ArgumentOutOfRangeException(nameof(args.Origin))
             };
 
-            await PaginatedRequest(Request, NextRequest, Perform, Condition);
-
-            if (Console.IsOutputRedirected)
-                Console.WriteLine($"cursor: {args.Cursor}");
-            else
-                Console.WriteLine();
-
+            try
+            {
+                await PaginatedRequest(Request, NextRequest, Perform, Condition);
+            }
+            finally
+            {
+                if (lastCursor is { Length: > 0 })
+                    Console.WriteLine($"Last cursor: {lastCursor}");
+            }
 
             Task<GetResponse<Follow>> Request()
             {
@@ -98,7 +102,7 @@ namespace TwitchTools
                 {
                     FromId = firstRequestArgs.FromId,
                     ToId = firstRequestArgs.ToId,
-                    After = prev.Pagination?.Cursor,
+                    After = lastCursor,
                     First = GetNextLimit(count, args.Limit),
                 };
 
@@ -106,7 +110,7 @@ namespace TwitchTools
             }
             void Perform(GetResponse<Follow> response)
             {
-                args.Cursor = response.Pagination?.Cursor;
+                lastCursor = response.Pagination?.Cursor;
 
                 foreach (var follow in response.Data)
                     Console.WriteLine(string.Join(',', dataSelector(follow)));
@@ -114,7 +118,7 @@ namespace TwitchTools
             }
             bool Condition(GetResponse<Follow> res)
             {
-                return !string.IsNullOrEmpty(res.Pagination?.Cursor) && count < args.Limit;
+                return lastCursor is { Length: > 0 } && count < args.Limit;
             }
 
         }

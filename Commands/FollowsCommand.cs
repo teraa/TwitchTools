@@ -13,15 +13,14 @@ namespace TwitchTools
         {
             public FollowOrigin Origin { get; set; }
             public string User { get; set; }
+            public bool IsId { get; set; }
             public int Limit { get; set; }
             public string Cursor { get; set; }
         }
 
         public enum FollowOrigin
         {
-            FromId,
             From,
-            ToId,
             To
         }
 
@@ -31,23 +30,19 @@ namespace TwitchTools
             var token = GetEnvironmentVariableOrError(EnvToken);
             var client = new TwitchRestClient(clientId, token);
 
-            (string toId, string fromId) user = args.Origin switch
+            string userId;
+            if (args.IsId)
             {
-                FollowOrigin.FromId => (null, args.User),
-                FollowOrigin.From => (null, await GetUserId(args.User)),
-                FollowOrigin.ToId => (args.User, null),
-                FollowOrigin.To => (await GetUserId(args.User), null),
-                _ => throw new ArgumentOutOfRangeException(nameof(args.Origin)),
-            };
-
-            async Task<string> GetUserId(string login)
+                userId = args.User;
+            }
+            else
             {
-                var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { login } });
-                var user = response.Data.FirstOrDefault();
-                if (user is null)
-                    Error($"Could not find user: {login}");
+                var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { args.User } });
+                var restUser = response.Data.FirstOrDefault();
+                if (restUser is null)
+                    Error($"Could not find user: {args.User}");
 
-                return user.Id;
+                userId = restUser.Id;
             }
 
             var tableHeaders = new List<TableHeader>
@@ -63,18 +58,25 @@ namespace TwitchTools
             };
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
-            int count = 0;
-            var requestArgs = new GetFollowsArgs
+            (string fromId, string toId) user = args.Origin switch
             {
-                ToId = user.toId,
+                FollowOrigin.From => (userId, null),
+                FollowOrigin.To => (null, userId),
+                _ => throw new ArgumentOutOfRangeException(nameof(args.Origin))
+            };
+
+            int count = 0;
+            var firstRequestArgs = new GetFollowsArgs
+            {
                 FromId = user.fromId,
+                ToId = user.toId,
                 After = args.Cursor,
                 First = GetNextLimit(count, args.Limit),
             };
 
             Func<Follow, List<string>> dataSelector = args.Origin switch
             {
-                FollowOrigin.FromId or FollowOrigin.From
+                FollowOrigin.From
                     => follow => new List<string>
                     {
                         $"{(++count)}:",
@@ -82,7 +84,7 @@ namespace TwitchTools
                         follow.ToName,
                         follow.ToId
                     },
-                FollowOrigin.ToId or FollowOrigin.To
+                FollowOrigin.To
                     => follow => new List<string>
                     {
                         $"{(++count)}:",
@@ -103,14 +105,14 @@ namespace TwitchTools
 
             Task<GetResponse<Follow>> Request()
             {
-                return client.GetFollowsAsync(requestArgs);
+                return client.GetFollowsAsync(firstRequestArgs);
             }
             Task<GetResponse<Follow>> NextRequest(GetResponse<Follow> prev)
             {
                 var newArgs = new GetFollowsArgs
                 {
-                    ToId = user.toId,
-                    FromId = user.fromId,
+                    FromId = firstRequestArgs.FromId,
+                    ToId = firstRequestArgs.ToId,
                     After = prev.Pagination?.Cursor,
                     First = GetNextLimit(count, args.Limit),
                 };

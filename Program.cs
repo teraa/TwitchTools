@@ -29,6 +29,11 @@ namespace TwitchTools
             {
                 new Argument<FollowOrigin>("origin"),
                 new Argument<string>("user"),
+                new Option<bool>(
+                    aliases: new[] { "-i", "--is-id" },
+                    getDefaultValue: () => false,
+                    description: "indicates that the provided user argument is a user ID rather than a username"
+                ),
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
                     getDefaultValue: () => DefaultFollowLimit,

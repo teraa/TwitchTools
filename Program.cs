@@ -14,7 +14,6 @@ namespace TwitchTools
         private const string EnvClientId = "TW_CLIENT_ID";
         private const int DefaultRequestLimit = 100;
         private const int DefaultFollowLimit = 100;
-        private const Direction DefaultFollowDirection = Direction.Desc;
         private const int DefaultBantoolPeriod = 30;
         private const int DefaultBantoolLimit = 95;
         private const string DefaultBantoolCommand = "ban";
@@ -23,12 +22,13 @@ namespace TwitchTools
         {
             var rootCommand = new RootCommand();
 
-            #region followers
-            var followersCommand = new Command(
-                name: "followers",
-                description: "get a list of channel followers")
+            #region follows
+            var followsCommand = new Command(
+                name: "follows",
+                description: "get a list of follows")
             {
-                new Argument<string>("channel"),
+                new Argument<FollowOrigin>("origin"),
+                new Argument<string>("user"),
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
                     getDefaultValue: () => DefaultFollowLimit,
@@ -37,22 +37,10 @@ namespace TwitchTools
                     aliases: new[] { "--cursor" },
                     description: "cursor from where to start fetching")
             };
-            followersCommand.Handler = CommandHandler.Create<FollowersArguments>(Followers);
-            rootCommand.AddCommand(followersCommand);
+            followsCommand.Handler = CommandHandler.Create<FollowsCommandArgs>(Follows);
+            rootCommand.AddCommand(followsCommand);
             #endregion
-            #region following
-            var followingCommand = new Command(
-                name: "following",
-                description: "get a list of channels the user is following")
-            {
-                new Argument<string>("channel"),
-                new Option<int>(
-                    aliases: new[] { "-l", "--limit" },
-                    getDefaultValue: () => DefaultFollowLimit, description: "number of users to fetch")
-            };
-            followingCommand.Handler = CommandHandler.Create<FollowingArguments>(Following);
-            rootCommand.AddCommand(followingCommand);
-            #endregion
+
             #region info
             var infoCommand = new Command(
                 name: "info",
@@ -67,6 +55,7 @@ namespace TwitchTools
             infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, InfoSort>(Info);
             rootCommand.AddCommand(infoCommand);
             #endregion
+
             #region bantool
             var banToolCommand = new Command(
                 name: "bantool",

@@ -32,18 +32,16 @@ namespace TwitchTools
                 userId = restUser.Id;
             }
 
-            var tableHeaders = new List<TableHeader>
-            {
-                new TableHeader("", (int)Math.Ceiling(Math.Log10(args.Limit + 1)) + 1),
-                new TableHeader("Followed at (UTC)", -19),
-                new TableHeader("Display Name", -25),
-                new TableHeader("ID", 15),
-            };
-            var tableOptions = new TablePrintOptions
-            {
-                Borders = TableBorders.None
-            };
-            TableUtils.PrintHeaders(tableHeaders, tableOptions);
+            Console.WriteLine(string.Join(',', new[]
+                {
+                    "#",
+                    "Followed at (UTC)",
+                    "ID",
+                    "DisplayName",
+                }
+            ));
+
+            string countFormat = $"d{(int)Math.Ceiling(Math.Log10(args.Limit + 1))}";
 
             (string fromId, string toId) user = args.Origin switch
             {
@@ -66,18 +64,18 @@ namespace TwitchTools
                 FollowOrigin.From
                     => follow => new List<string>
                     {
-                        $"{(++count)}:",
+                        $"{(++count).ToString(countFormat)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
+                        follow.ToId,
                         follow.ToName,
-                        follow.ToId
                     },
                 FollowOrigin.To
                     => follow => new List<string>
                     {
-                        $"{(++count)}:",
+                        $"{(++count).ToString(countFormat)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
+                        follow.FromId,
                         follow.FromName,
-                        follow.FromId
                     },
                 _ => throw new ArgumentOutOfRangeException(nameof(args.Origin))
             };
@@ -112,11 +110,10 @@ namespace TwitchTools
 
                 if (!Console.IsOutputRedirected)
                     Console.Write("\r");
+
                 foreach (var follow in response.Data)
-                {
-                    var row = new TableRow(dataSelector(follow));
-                    TableUtils.PrintRow(tableHeaders, row, tableOptions);
-                }
+                    Console.WriteLine(string.Join(',', dataSelector(follow)));
+
                 if (!Console.IsOutputRedirected)
                     Console.Write($"cursor: {response.Pagination?.Cursor}");
             }

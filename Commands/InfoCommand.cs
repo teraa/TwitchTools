@@ -75,29 +75,27 @@ namespace TwitchTools
                 _ => throw new ArgumentException("Invalid argument value", nameof(sort))
             };
 
-            var tableHeaders = new List<TableHeader>
+            Console.WriteLine(string.Join(',', new[]
                 {
-                    new TableHeader("Name", -25),
-                    new TableHeader("Display Name", -25),
-                    new TableHeader("ID", 15),
-                    new TableHeader("Created at (UTC)", -19),
-                };
-
-            var tableOptions = new TablePrintOptions
-            {
-                Borders = TableBorders.None
-            };
-
-            TableUtils.PrintHorizontalDivider(tableHeaders, tableOptions);
-            TableUtils.PrintHeaders(tableHeaders, tableOptions);
+                    "Created At (UTC)",
+                    "ID",
+                    "Login",
+                    "Display Name",
+                }
+            ));
 
             foreach (var user in retrievedUsers)
             {
-                var rowData = new List<string> { user.Login, user.DisplayName, user.Id, user.CreatedAt.ToString(Program.TimestampFormat) };
-                var row = new TableRow(rowData);
-                TableUtils.PrintRow(tableHeaders, row, tableOptions);
+                var data = new[]
+                {
+                    user.CreatedAt.ToString(Program.TimestampFormat),
+                    user.Id,
+                    user.Login,
+                    user.DisplayName,
+                };
+
+                Console.WriteLine(string.Join(',', data));
             }
-            TableUtils.PrintHorizontalDivider(tableHeaders, tableOptions);
 
             var missing = usernames.Except(
                 retrievedUsers.Select(x => x.Login),

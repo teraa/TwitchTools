@@ -9,9 +9,9 @@ namespace TwitchTools
     public class Program
     {
         internal const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
-        internal const string EnvToken = "TW_TOKEN";
-        internal const string EnvLogin = "TW_LOGIN";
-        internal const string EnvClientId = "TW_CLIENT_ID";
+        internal const string EnvToken = "ACCESSTOKEN";
+        internal const string EnvLogin = "LOGIN";
+        internal const string EnvClientId = "CLIENTID";
 
         static void Main(string[] args)
         {

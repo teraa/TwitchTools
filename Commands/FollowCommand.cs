@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Twitch.API.Kraken;
-using Twitch.API.Kraken.Params;
-using Twitch.API.Kraken.Responses;
+using Twitch.Rest.Helix;
 using TwitchTools.Utils;
 
 namespace TwitchTools
@@ -19,11 +17,12 @@ namespace TwitchTools
 
         static async Task<string> GetUserId(string username)
         {
-            var clientId = GetEnvironmentVariableOrError(EnvTokenClientId);
+            var clientId = GetEnvironmentVariableOrError(EnvClientId);
             var token = GetEnvironmentVariableOrError(EnvToken);
-            using var client = new Twitch.API.Helix.HelixApiClient(clientId, token);
-            var res = await client.GetUsersAsync(new Twitch.API.Helix.Params.GetUsersParams { UserLogins = new[] { username } });
-            var user = res.Data.FirstOrDefault();
+            var client = new TwitchRestClient(clientId, token);
+
+            var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { username } });
+            var user = response.Data.FirstOrDefault();
 
             if (user == null)
                 Error($"Could not find channel: {username}.");
@@ -35,8 +34,6 @@ namespace TwitchTools
         {
             public string Channel { get; set; }
             public int Limit { get; set; }
-            public int Offset { get; set; }
-            public Direction Direction { get; set; }
             public string Cursor { get; set; }
         }
 
@@ -44,16 +41,15 @@ namespace TwitchTools
         {
             var userId = await GetUserId(args.Channel);
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-            using var client = new KrakenApiClient(clientId);
+            var token = GetEnvironmentVariableOrError(EnvToken);
+            var client = new TwitchRestClient(clientId, token);
 
             var tableHeaders = new List<TableHeader>
             {
                 new TableHeader("", (int)Math.Ceiling(Math.Log10(args.Limit + 1)) + 1),
                 new TableHeader("Followed at (UTC)", -19),
-                new TableHeader("Name", -25),
                 new TableHeader("Display Name", -25),
                 new TableHeader("ID", 15),
-                new TableHeader("Created at (UTC)", -19),
             };
             var tableOptions = new TablePrintOptions
             {
@@ -62,12 +58,11 @@ namespace TwitchTools
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
-            var requestParams = new GetChannelFollowersParams
+            var requestArgs = new GetFollowsArgs
             {
-                Direction = args.Direction.ToString().ToLower(),
-                Limit = GetNextLimit(count, args.Limit),
-                Offset = args.Offset,
-                Cursor = args.Cursor
+                ToId = userId,
+                After = args.Cursor,
+                First = GetNextLimit(count, args.Limit),
             };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
@@ -78,61 +73,61 @@ namespace TwitchTools
                 Console.WriteLine();
 
 
-            Task<GetChannelFollowersResponse> Request()
+            Task<GetResponse<Follow>> Request()
             {
-                return client.GetChannelFollowersAsync(userId, requestParams);
+                return client.GetFollowsAsync(requestArgs);
             }
-            Task<GetChannelFollowersResponse> NextRequest(GetChannelFollowersResponse prev)
+            Task<GetResponse<Follow>> NextRequest(GetResponse<Follow> prev)
             {
-                requestParams.Cursor = prev.Cursor;
-                requestParams.Limit = GetNextLimit(count, args.Limit);
-                requestParams.Offset = 0;
-                return client.GetChannelFollowersAsync(userId, requestParams);
+                var newArgs = new GetFollowsArgs
+                {
+                    ToId = userId,
+                    After = prev.Pagination?.Cursor,
+                    First = GetNextLimit(count, args.Limit),
+                };
+
+                return client.GetFollowsAsync(newArgs);
             }
-            void Perform(GetChannelFollowersResponse response)
+            void Perform(GetResponse<Follow> response)
             {
-                args.Cursor = response.Cursor;
+                args.Cursor = response.Pagination?.Cursor;
 
                 if (!Console.IsOutputRedirected)
                     Console.Write("\r");
-                foreach (var follow in response.Follows)
+                foreach (var follow in response.Data)
                 {
-                    var rowData = new List<string> { $"{(++count)}:", follow.CreatedAt.ToString(TimestampFormat), follow.User.Login, follow.User.DisplayName, follow.User.Id, follow.User.CreatedAt.ToString(TimestampFormat) };
+                    var rowData = new List<string> { $"{(++count)}:", follow.FollowedAt.ToString(TimestampFormat), follow.FromName, follow.FromId };
                     var row = new TableRow(rowData);
                     TableUtils.PrintRow(tableHeaders, row, tableOptions);
                 }
                 if (!Console.IsOutputRedirected)
-                    Console.Write($"cursor: {response.Cursor}");
+                    Console.Write($"cursor: {response.Pagination?.Cursor}");
             }
-            bool Condition(GetChannelFollowersResponse res)
+            bool Condition(GetResponse<Follow> res)
             {
-                return !string.IsNullOrEmpty(res.Cursor) && count < args.Limit;
+                return !string.IsNullOrEmpty(res.Pagination?.Cursor) && count < args.Limit;
             }
-
         }
 
         public class FollowingArguments
         {
             public string Channel { get; set; }
             public int Limit { get; set; }
-            public int Offset { get; set; }
-            public Direction Direction { get; set; }
         }
 
         static async Task Following(FollowingArguments args)
         {
             var userId = await GetUserId(args.Channel);
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-            using var client = new KrakenApiClient(clientId);
+            var token = GetEnvironmentVariableOrError(EnvToken);
+            var client = new TwitchRestClient(clientId, token);
 
             var tableHeaders = new List<TableHeader>
             {
                 new TableHeader("", (int)Math.Ceiling(Math.Log10(args.Limit + 1)) + 1),
                 new TableHeader("Followed at (UTC)", -19),
-                new TableHeader("Name", -25),
                 new TableHeader("Display Name", -25),
                 new TableHeader("ID", 15),
-                new TableHeader("Created at (UTC)", -19),
             };
             var tableOptions = new TablePrintOptions
             {
@@ -141,37 +136,41 @@ namespace TwitchTools
             TableUtils.PrintHeaders(tableHeaders, tableOptions);
 
             int count = 0;
-            var requestParams = new GetUserFollowsParams
+            var requestArgs = new GetFollowsArgs
             {
-                Direction = args.Direction.ToString().ToLower(),
-                Limit = GetNextLimit(count, args.Limit),
-                Offset = args.Offset
+                FromId = userId,
+                First = GetNextLimit(count, args.Limit),
             };
 
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
 
-            Task<GetUserFollowsResponse> Request()
+            Task<GetResponse<Follow>> Request()
             {
-                return client.GetUserFollowsAsync(userId, requestParams);
+                return client.GetFollowsAsync(requestArgs);
             }
-            Task<GetUserFollowsResponse> NextRequest(GetUserFollowsResponse prev)
+            Task<GetResponse<Follow>> NextRequest(GetResponse<Follow> prev)
             {
-                requestParams.Offset += requestParams.Limit;
-                requestParams.Limit = GetNextLimit(count, args.Limit);
-                return client.GetUserFollowsAsync(userId, requestParams);
-            }
-            void Perform(GetUserFollowsResponse response)
-            {
-                foreach (var follow in response.Follows)
+                var newArgs = new GetFollowsArgs
                 {
-                    var rowData = new List<string> { $"{(++count)}:", follow.CreatedAt.ToString(TimestampFormat), follow.Channel.Login, follow.Channel.DisplayName, follow.Channel.Id, follow.Channel.CreatedAt.ToString(TimestampFormat) };
+                    FromId = userId,
+                    After = prev.Pagination?.Cursor,
+                    First = GetNextLimit(count, args.Limit),
+                };
+
+                return client.GetFollowsAsync(newArgs);
+            }
+            void Perform(GetResponse<Follow> response)
+            {
+                foreach (var follow in response.Data)
+                {
+                    var rowData = new List<string> { $"{(++count)}:", follow.FollowedAt.ToString(TimestampFormat), follow.ToName, follow.ToId };
                     var row = new TableRow(rowData);
                     TableUtils.PrintRow(tableHeaders, row, tableOptions);
                 }
             }
-            bool Condition(GetUserFollowsResponse res)
+            bool Condition(GetResponse<Follow> res)
             {
-                return res.Follows.Any() && count < args.Limit;
+                return !string.IsNullOrEmpty(res.Pagination?.Cursor) && count < args.Limit;
             }
         }
 

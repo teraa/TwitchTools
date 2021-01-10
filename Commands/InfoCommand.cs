@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Twitch.API.Kraken;
-using Twitch.API.Kraken.Params;
+using Twitch.Rest.Helix;
 using TwitchTools.Utils;
 
 namespace TwitchTools
@@ -32,38 +31,44 @@ namespace TwitchTools
         static async Task InfoSingle(string username)
         {
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-            using var client = new KrakenApiClient(clientId);
+            var token = GetEnvironmentVariableOrError(EnvToken);
+            var client = new TwitchRestClient(clientId, token);
 
-            var res = await client.GetUsersAsync(new GetUsersParams { UserLogins = new[] { username } });
-            var user = res.Users.FirstOrDefault();
+            var res = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { username } });
+            var user = res.Data.FirstOrDefault();
 
             if (user is null)
                 Error($"Could not find user: {username}");
 
-            Console.WriteLine(
+            Console.WriteLine
+            (
                 $"ID:               {user.Id}\n" +
-                $"Name:             {user.Login}\n" +
+                $"Login:            {user.Login}\n" +
                 $"Display Name:     {user.DisplayName}\n" +
                 $"Type:             {user.Type}\n" +
+                $"Broadcaster Type: {user.BroadcasterType}\n" +
                 $"Description:      {user.Description}\n" +
                 $"Created at (UTC): {user.CreatedAt.ToString(TimestampFormat)}\n" +
-                $"Updated at (UTC): {user.UpdatedAt.ToString(TimestampFormat)}\n" +
-                $"Profile Image:    {user.ProfileImageUrl}\n");
+                $"View Count:       {user.ViewCount}\n" +
+                $"Profile Image:    {user.ProfileImageUrl}\n" +
+                $"Offline Image:    {user.OfflineImageUrl}\n"
+            );
         }
 
         static async Task InfoMultiple(IEnumerable<string> usernames, InfoSort sort)
         {
             var clientId = GetEnvironmentVariableOrError(EnvClientId);
-            using var client = new KrakenApiClient(clientId);
+            var token = GetEnvironmentVariableOrError(EnvToken);
+            var client = new TwitchRestClient(clientId, token);
 
             IEnumerable<string> remainingUsers = usernames.ToList();
             var retrievedUsers = new List<User>();
 
             while (remainingUsers.Any())
             {
-                var requestParams = new GetUsersParams { UserLogins = remainingUsers.Take(DefaultRequestLimit) };
+                var requestParams = new GetUsersArgs { Logins = remainingUsers.Take(DefaultRequestLimit).ToArray() };
                 var response = await client.GetUsersAsync(requestParams);
-                retrievedUsers.AddRange(response.Users);
+                retrievedUsers.AddRange(response.Data);
                 remainingUsers = remainingUsers.Skip(DefaultRequestLimit);
             }
 

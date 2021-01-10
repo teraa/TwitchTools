@@ -11,7 +11,6 @@ namespace TwitchTools
         private const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
         private const string EnvToken = "TW_TOKEN";
         private const string EnvLogin = "TW_LOGIN";
-        private const string EnvTokenClientId = "TW_TOKEN_CLIENT_ID"; // Client ID used to generate the token
         private const string EnvClientId = "TW_CLIENT_ID";
         private const int DefaultRequestLimit = 100;
         private const int DefaultFollowLimit = 100;
@@ -34,11 +33,6 @@ namespace TwitchTools
                     aliases: new[] { "-l", "--limit" },
                     getDefaultValue: () => DefaultFollowLimit,
                     description: "number of users to fetch"),
-                new Option<int>(
-                    aliases: new[] { "-o", "--offset" }, "starting offset"),
-                new Option<Direction>(
-                    aliases: new[] { "--direction" },
-                    getDefaultValue: () => DefaultFollowDirection),
                 new Option<string>(
                     aliases: new[] { "--cursor" },
                     description: "cursor from where to start fetching")
@@ -54,13 +48,7 @@ namespace TwitchTools
                 new Argument<string>("channel"),
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
-                    getDefaultValue: () => DefaultFollowLimit, description: "number of users to fetch"),
-                new Option<int>(
-                    aliases: new[] { "-o", "--offset" },
-                    description: "starting offset"),
-                new Option<Direction>(
-                    aliases: new[] { "--direction" },
-                    getDefaultValue: () => DefaultFollowDirection)
+                    getDefaultValue: () => DefaultFollowLimit, description: "number of users to fetch")
             };
             followingCommand.Handler = CommandHandler.Create<FollowingArguments>(Following);
             rootCommand.AddCommand(followingCommand);

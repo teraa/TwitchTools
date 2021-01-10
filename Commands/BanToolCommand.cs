@@ -1,8 +1,10 @@
+using IrcMessageParser;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Twitch.Irc;
-using Twitch.Utils;
 using TwitchTools.Utils;
 
 namespace TwitchTools
@@ -37,16 +39,33 @@ namespace TwitchTools
                 return;
             }
 
-            using var rateLimiter = new RateLimiter(TimeSpan.FromSeconds(args.Period), args.Limit);
-            using var client = new TwitchIrcClient(args.Login, args.Token, new TwitchIrcConfig { PingInterval = TimeSpan.FromMinutes(4) });
-            client.Log += (s, e) => ConsoleUtils.Write($"IRC: {e.Message}\n", ConsoleColor.DarkCyan);
-            client.RawMessageReceived += (s, e) => ConsoleUtils.Write($"> {e.Message}\n", ConsoleColor.DarkYellow);
-            client.RawMessageSent += (s, e) => ConsoleUtils.Write($"< {e.Message}\n", ConsoleColor.DarkGreen);
-            await client.ConnectAsync();
+            var client = new TwitchIrcClient
+            (
+                options: new()
+                {
+                    CommandLimit = new(args.Limit, TimeSpan.FromSeconds(args.Period)),
+                    PingInterval = TimeSpan.FromMinutes(4),
+                },
+                logger: new MyLogger<TwitchIrcClient>()
+            );
+
+            await client.ConnectAsync(args.Login, args.Token);
+            client.RawMessageReceived += m => { ConsoleUtils.Write($"> {m}\n", ConsoleColor.DarkYellow); return Task.CompletedTask; };
+            client.RawMessageSent += m => { ConsoleUtils.Write($"< {m}\n", ConsoleColor.DarkGreen); return Task.CompletedTask; };
+
+            var tasks = new List<Task>();
             foreach (var user in users)
             {
-                await rateLimiter.PerformAsync<Task>(() => client.SendCommandAsync(args.Channel, $"/{args.Command} {user} {args.Arguments}"));
+                var message = new IrcMessage
+                {
+                    Command = IrcCommand.PRIVMSG,
+                    Arg = $"#{args.Channel}",
+                    Content = new($"/{args.Command} {user} {args.Arguments}"),
+                };
+                tasks.Add(client.SendAsync(message));
             }
+
+            await Task.WhenAll(tasks);
 
             if (args.Wait && !Console.IsInputRedirected)
             {
@@ -56,6 +75,41 @@ namespace TwitchTools
             }
 
             await client.DisconnectAsync();
+        }
+    }
+    public class MyLogger<T> : ILogger<T>
+    {
+        public static readonly object Lock = new();
+
+        public IDisposable BeginScope<TState>(TState state)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return true;
+        }
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
+            lock (Lock)
+            {
+                var str = formatter(state, exception);
+                var color = Console.ForegroundColor;
+                Console.ForegroundColor = logLevel switch
+                {
+                    LogLevel.Warning => ConsoleColor.Yellow,
+                    LogLevel.Error => ConsoleColor.Red,
+                    _ => ConsoleColor.Gray
+                };
+                Console.WriteLine(str);
+                if (exception is not null)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine(exception);
+                }
+                Console.ForegroundColor = color;
+            }
         }
     }
 }

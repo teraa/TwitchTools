@@ -6,17 +6,12 @@ using System.CommandLine.Parsing;
 
 namespace TwitchTools
 {
-    partial class Program
+    public class Program
     {
-        private const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
-        private const string EnvToken = "TW_TOKEN";
-        private const string EnvLogin = "TW_LOGIN";
-        private const string EnvClientId = "TW_CLIENT_ID";
-        private const int DefaultRequestLimit = 100;
-        private const int DefaultFollowLimit = 100;
-        private const int DefaultBantoolPeriod = 30;
-        private const int DefaultBantoolLimit = 95;
-        private const string DefaultBantoolCommand = "ban";
+        internal const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
+        internal const string EnvToken = "TW_TOKEN";
+        internal const string EnvLogin = "TW_LOGIN";
+        internal const string EnvClientId = "TW_CLIENT_ID";
 
         static void Main(string[] args)
         {
@@ -27,7 +22,7 @@ namespace TwitchTools
                 name: "follows",
                 description: "get a list of follows")
             {
-                new Argument<FollowOrigin>("origin"),
+                new Argument<FollowsCommand.FollowOrigin>("origin"),
                 new Argument<string>("user"),
                 new Option<bool>(
                     aliases: new[] { "-i", "--is-id" },
@@ -36,13 +31,13 @@ namespace TwitchTools
                 ),
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
-                    getDefaultValue: () => DefaultFollowLimit,
+                    getDefaultValue: () => 100,
                     description: "number of users to fetch"),
                 new Option<string>(
                     aliases: new[] { "--cursor" },
                     description: "cursor from where to start fetching")
             };
-            followsCommand.Handler = CommandHandler.Create<FollowsCommandArgs>(Follows);
+            followsCommand.Handler = CommandHandler.Create<FollowsCommand.Args>(FollowsCommand.RunAsync);
             rootCommand.AddCommand(followsCommand);
             #endregion
 
@@ -52,12 +47,12 @@ namespace TwitchTools
                 description: "print user info")
             {
                 new Argument<IEnumerable<string>>("username"),
-                new Option<InfoSort>(
+                new Option<InfoCommand.InfoSort>(
                     aliases: new[] { "-s", "--sort" },
-                    getDefaultValue: () => InfoSort.None,
+                    getDefaultValue: () => InfoCommand.InfoSort.None,
                     description: "sort results by")
             };
-            infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, InfoSort>(Info);
+            infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, InfoCommand.InfoSort>(InfoCommand.RunAsync);
             rootCommand.AddCommand(infoCommand);
             #endregion
 
@@ -71,7 +66,7 @@ namespace TwitchTools
                     description: "channel to execute the commands in"),
                 new Argument<string>(
                     name: "command",
-                    getDefaultValue: () => DefaultBantoolCommand,
+                    getDefaultValue: () => "ban",
                     description: "command to execute"),
                 new Argument<string>(
                     name: "arguments",
@@ -79,11 +74,11 @@ namespace TwitchTools
                     description: "command arguments"),
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
-                    getDefaultValue: () => DefaultBantoolLimit,
+                    getDefaultValue: () => 95,
                     description: "maximum number of action per period"),
                 new Option<int>(
                     aliases: new[] { "-p", "--period" },
-                    getDefaultValue: () => DefaultBantoolPeriod,
+                    getDefaultValue: () => 30,
                     description: "period (in seconds) in which a limited number of actions can be performed"),
                 new Option<bool>(
                     aliases: new[] { "-w", "--wait" },
@@ -96,7 +91,7 @@ namespace TwitchTools
                     aliases: new[] { "--token" },
                     description: $"OAuth token")
             };
-            banToolCommand.Handler = CommandHandler.Create<BanToolArguments>(BanTool);
+            banToolCommand.Handler = CommandHandler.Create<BanToolCommand.Args>(BanToolCommand.RunAsync);
             rootCommand.AddCommand(banToolCommand);
             #endregion
 

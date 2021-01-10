@@ -7,27 +7,14 @@ using TwitchTools.Utils;
 
 namespace TwitchTools
 {
-    partial class Program
+    public static class FollowsCommand
     {
-        public class FollowsCommandArgs
-        {
-            public FollowOrigin Origin { get; set; }
-            public string User { get; set; }
-            public bool IsId { get; set; }
-            public int Limit { get; set; }
-            public string Cursor { get; set; }
-        }
+        private const int BatchLimit = 100;
 
-        public enum FollowOrigin
+        public static async Task RunAsync(Args args)
         {
-            From,
-            To
-        }
-
-        static async Task Follows(FollowsCommandArgs args)
-        {
-            var clientId = GetEnvironmentVariableOrError(EnvClientId);
-            var token = GetEnvironmentVariableOrError(EnvToken);
+            var clientId = Program.GetEnvironmentVariableOrError(Program.EnvClientId);
+            var token = Program.GetEnvironmentVariableOrError(Program.EnvToken);
             var client = new TwitchRestClient(clientId, token);
 
             string userId;
@@ -40,7 +27,7 @@ namespace TwitchTools
                 var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { args.User } });
                 var restUser = response.Data.FirstOrDefault();
                 if (restUser is null)
-                    Error($"Could not find user: {args.User}");
+                    Program.Error($"Could not find user: {args.User}");
 
                 userId = restUser.Id;
             }
@@ -80,7 +67,7 @@ namespace TwitchTools
                     => follow => new List<string>
                     {
                         $"{(++count)}:",
-                        follow.FollowedAt.ToString(TimestampFormat),
+                        follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.ToName,
                         follow.ToId
                     },
@@ -88,7 +75,7 @@ namespace TwitchTools
                     => follow => new List<string>
                     {
                         $"{(++count)}:",
-                        follow.FollowedAt.ToString(TimestampFormat),
+                        follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.FromName,
                         follow.FromId
                     },
@@ -142,7 +129,7 @@ namespace TwitchTools
         static int GetNextLimit(int count, int totalLimit)
         {
             var result = totalLimit - count;
-            return result > DefaultRequestLimit ? DefaultRequestLimit : result;
+            return result > BatchLimit ? BatchLimit : result;
         }
 
         static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)
@@ -155,6 +142,21 @@ namespace TwitchTools
                 result = await nextRequest(result);
                 perform?.Invoke(result);
             }
+        }
+
+        public class Args
+        {
+            public FollowOrigin Origin { get; set; }
+            public string User { get; set; }
+            public bool IsId { get; set; }
+            public int Limit { get; set; }
+            public string Cursor { get; set; }
+        }
+
+        public enum FollowOrigin
+        {
+            From,
+            To
         }
 
     }

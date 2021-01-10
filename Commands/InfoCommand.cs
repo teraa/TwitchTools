@@ -7,16 +7,11 @@ using TwitchTools.Utils;
 
 namespace TwitchTools
 {
-    partial class Program
+    public static class InfoCommand
     {
-        public enum InfoSort
-        {
-            None,
-            Date,
-            Name
-        }
+        private const int BatchLimit = 100;
 
-        static async Task Info(IEnumerable<string> username, InfoSort sort)
+        public static async Task RunAsync(IEnumerable<string> username, InfoSort sort)
         {
             username ??= ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -28,17 +23,17 @@ namespace TwitchTools
                 await InfoMultiple(username, sort);
         }
 
-        static async Task InfoSingle(string username)
+        private static async Task InfoSingle(string username)
         {
-            var clientId = GetEnvironmentVariableOrError(EnvClientId);
-            var token = GetEnvironmentVariableOrError(EnvToken);
+            var clientId = Program.GetEnvironmentVariableOrError(Program.EnvClientId);
+            var token = Program.GetEnvironmentVariableOrError(Program.EnvToken);
             var client = new TwitchRestClient(clientId, token);
 
             var res = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { username } });
             var user = res.Data.FirstOrDefault();
 
             if (user is null)
-                Error($"Could not find user: {username}");
+                Program.Error($"Could not find user: {username}");
 
             Console.WriteLine
             (
@@ -48,17 +43,17 @@ namespace TwitchTools
                 $"Type:             {user.Type}\n" +
                 $"Broadcaster Type: {user.BroadcasterType}\n" +
                 $"Description:      {user.Description}\n" +
-                $"Created at (UTC): {user.CreatedAt.ToString(TimestampFormat)}\n" +
+                $"Created at (UTC): {user.CreatedAt.ToString(Program.TimestampFormat)}\n" +
                 $"View Count:       {user.ViewCount}\n" +
                 $"Profile Image:    {user.ProfileImageUrl}\n" +
                 $"Offline Image:    {user.OfflineImageUrl}\n"
             );
         }
 
-        static async Task InfoMultiple(IEnumerable<string> usernames, InfoSort sort)
+        private static async Task InfoMultiple(IEnumerable<string> usernames, InfoSort sort)
         {
-            var clientId = GetEnvironmentVariableOrError(EnvClientId);
-            var token = GetEnvironmentVariableOrError(EnvToken);
+            var clientId = Program.GetEnvironmentVariableOrError(Program.EnvClientId);
+            var token = Program.GetEnvironmentVariableOrError(Program.EnvToken);
             var client = new TwitchRestClient(clientId, token);
 
             IEnumerable<string> remainingUsers = usernames.ToList();
@@ -66,10 +61,10 @@ namespace TwitchTools
 
             while (remainingUsers.Any())
             {
-                var requestParams = new GetUsersArgs { Logins = remainingUsers.Take(DefaultRequestLimit).ToArray() };
+                var requestParams = new GetUsersArgs { Logins = remainingUsers.Take(BatchLimit).ToArray() };
                 var response = await client.GetUsersAsync(requestParams);
                 retrievedUsers.AddRange(response.Data);
-                remainingUsers = remainingUsers.Skip(DefaultRequestLimit);
+                remainingUsers = remainingUsers.Skip(BatchLimit);
             }
 
             retrievedUsers = sort switch
@@ -98,7 +93,7 @@ namespace TwitchTools
 
             foreach (var user in retrievedUsers)
             {
-                var rowData = new List<string> { user.Login, user.DisplayName, user.Id, user.CreatedAt.ToString(TimestampFormat) };
+                var rowData = new List<string> { user.Login, user.DisplayName, user.Id, user.CreatedAt.ToString(Program.TimestampFormat) };
                 var row = new TableRow(rowData);
                 TableUtils.PrintRow(tableHeaders, row, tableOptions);
             }
@@ -114,5 +109,13 @@ namespace TwitchTools
                     Console.WriteLine(user);
             }
         }
+
+        public enum InfoSort
+        {
+            None,
+            Date,
+            Name
+        }
+
     }
 }

@@ -80,9 +80,6 @@ namespace TwitchTools
                 _ => throw new ArgumentOutOfRangeException(nameof(args.Origin))
             };
 
-            int consoleCursorTop = Console.CursorTop;
-            int lastWrite = 0;
-
             await PaginatedRequest(Request, NextRequest, Perform, Condition);
 
             if (Console.IsOutputRedirected)
@@ -111,25 +108,9 @@ namespace TwitchTools
             {
                 args.Cursor = response.Pagination?.Cursor;
 
-                if (!Console.IsOutputRedirected)
-                {
-                    var lines = Console.CursorTop - consoleCursorTop;
-                    var filler = new string(' ', lastWrite);
-                    Console.CursorTop = consoleCursorTop;
-                    Console.WriteLine(filler);
-                    Console.CursorTop = consoleCursorTop;
-                }
-
                 foreach (var follow in response.Data)
                     Console.WriteLine(string.Join(',', dataSelector(follow)));
 
-                if (!Console.IsOutputRedirected)
-                {
-                    consoleCursorTop = Console.CursorTop;
-                    var line = $"cursor: {response.Pagination?.Cursor}";
-                    Console.WriteLine(line);
-                    lastWrite = line.Length;
-                }
             }
             bool Condition(GetResponse<Follow> res)
             {

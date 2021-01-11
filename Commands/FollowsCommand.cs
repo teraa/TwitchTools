@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Twitch.Rest.Helix;
-using TwitchTools.Utils;
 
-namespace TwitchTools
+namespace TwitchTools.Commands
 {
     public static class FollowsCommand
     {

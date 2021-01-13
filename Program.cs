@@ -11,9 +11,9 @@ namespace TwitchTools
     {
         internal const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
         internal const string EnvToken = "ACCESSTOKEN";
-        internal const string EnvChatToken = "CHAT_TOKEN";
-        internal const string EnvLogin = "LOGIN";
         internal const string EnvClientId = "CLIENTID";
+        internal const string EnvLogin = "CHAT_LOGIN";
+        internal const string EnvChatToken = "CHAT_TOKEN";
 
         static void Main(string[] args)
         {

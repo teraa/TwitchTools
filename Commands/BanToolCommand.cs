@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Twitch.Irc;
 using TwitchTools.Utils;
@@ -39,7 +40,7 @@ namespace TwitchTools
                 return;
             }
 
-            var client = new TwitchIrcClient
+            using var client = new TwitchIrcClient
             (
                 options: new()
                 {
@@ -49,9 +50,30 @@ namespace TwitchTools
                 logger: new MyLogger<TwitchIrcClient>()
             );
 
+            using var sem = new SemaphoreSlim(0);
+
+            Task Ready()
+            {
+                client.Ready -= Ready;
+                sem.Release();
+                return Task.CompletedTask;
+            }
+            client.Ready += Ready;
+            client.RawMessageReceived += m =>
+            {
+                ConsoleUtils.Write($"> {m}\n", ConsoleColor.DarkYellow);
+                return Task.CompletedTask;
+            };
+            client.IrcMessageSent += m =>
+            {
+                if (m.Command != IrcCommand.PASS)
+                    ConsoleUtils.Write($"< {m}\n", ConsoleColor.DarkGreen);
+
+                return Task.CompletedTask;
+            };
+
             await client.ConnectAsync(args.Login, args.Token);
-            client.RawMessageReceived += m => { ConsoleUtils.Write($"> {m}\n", ConsoleColor.DarkYellow); return Task.CompletedTask; };
-            client.RawMessageSent += m => { ConsoleUtils.Write($"< {m}\n", ConsoleColor.DarkGreen); return Task.CompletedTask; };
+            await sem.WaitAsync();
 
             var tasks = new List<Task>();
             foreach (var user in users)

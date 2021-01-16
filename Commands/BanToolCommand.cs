@@ -12,18 +12,6 @@ namespace TwitchTools
 {
     public static class BanToolCommand
     {
-        public class Args
-        {
-            public string Channel { get; set; }
-            public string Command { get; set; }
-            public string Arguments { get; set; }
-            public int Limit { get; set; }
-            public int Period { get; set; }
-            public bool Wait { get; set; }
-            public string Login { get; set; }
-            public string Token { get; set; }
-        }
-
         public static async Task RunAsync(Args args)
         {
             args.Login ??= Program.GetEnvironmentVariableOrError(Program.EnvLogin);
@@ -98,7 +86,20 @@ namespace TwitchTools
 
             await client.DisconnectAsync();
         }
+
+        public class Args
+        {
+            public string Channel { get; set; }
+            public string Command { get; set; }
+            public string Arguments { get; set; }
+            public int Limit { get; set; }
+            public int Period { get; set; }
+            public bool Wait { get; set; }
+            public string Login { get; set; }
+            public string Token { get; set; }
+        }
     }
+
     public class MyLogger<T> : ILogger<T>
     {
         public static readonly object Lock = new();

@@ -104,8 +104,12 @@ namespace TwitchTools
                 Console.WriteLine(string.Join(',', data));
             }
 
+            Func<User, string> selector = isId
+                ? x => x.Id
+                : x => x.Login;
+
             var missing = usernames.Except(
-                retrievedUsers.Select(x => x.Login),
+                retrievedUsers.Select(selector),
                 StringComparer.OrdinalIgnoreCase).ToList();
             if (missing.Any())
             {

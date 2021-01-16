@@ -35,8 +35,12 @@ namespace TwitchTools
                     getDefaultValue: () => 100,
                     description: "number of users to fetch"),
                 new Option<string>(
-                    aliases: new[] { "--cursor" },
-                    description: "cursor from where to start fetching")
+                    aliases: new[] { "-a", "--after" },
+                    description: "cursor from where to start fetching"),
+                new Option<bool>(
+                    aliases: new[] { "-c", "--print-cursor" },
+                    getDefaultValue: () => false,
+                    description: "print the last cursor at the end")
             };
             followsCommand.Handler = CommandHandler.Create<FollowsCommand.Args>(FollowsCommand.RunAsync);
             rootCommand.AddCommand(followsCommand);

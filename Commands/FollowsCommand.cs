@@ -50,7 +50,7 @@ namespace TwitchTools.Commands
             };
 
             int count = 0;
-            string lastCursor = args.Cursor;
+            string lastCursor = args.After;
 
             var firstRequestArgs = new GetFollowsArgs
             {
@@ -85,11 +85,16 @@ namespace TwitchTools.Commands
             {
                 await PaginatedRequest(Request, NextRequest, Perform, Condition);
             }
-            finally
+            catch
             {
                 if (lastCursor is { Length: > 0 })
                     Console.WriteLine($"Last cursor: {lastCursor}");
+
+                throw;
             }
+
+            if (args.PrintCursor && lastCursor is { Length: > 0 })
+                    Console.WriteLine($"Last cursor: {lastCursor}");
 
             Task<GetResponse<Follow>> Request()
             {
@@ -145,7 +150,8 @@ namespace TwitchTools.Commands
             public string User { get; set; }
             public bool IsId { get; set; }
             public int Limit { get; set; }
-            public string Cursor { get; set; }
+            public string After { get; set; }
+            public bool PrintCursor { get; set; }
         }
 
         public enum FollowOrigin

@@ -11,25 +11,29 @@ namespace TwitchTools
     {
         private const int BatchLimit = 100;
 
-        public static async Task RunAsync(IEnumerable<string> username, InfoSort sort)
+        public static async Task RunAsync(IEnumerable<string> username, bool isId, InfoSort? sort)
         {
             username ??= ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
             if (username.Count() == 1)
-                await InfoSingle(username.First());
+                await InfoSingle(username.First(), isId);
             else
-                await InfoMultiple(username, sort);
+                await InfoMultiple(username, isId, sort);
         }
 
-        private static async Task InfoSingle(string username)
+        private static async Task InfoSingle(string username, bool isId)
         {
             var clientId = Program.GetEnvironmentVariableOrError(Program.EnvClientId);
             var token = Program.GetEnvironmentVariableOrError(Program.EnvToken);
             var client = new TwitchRestClient(clientId, token);
 
-            var res = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { username } });
+            var args = isId
+                ? new GetUsersArgs { Ids = new[] { username } }
+                : new GetUsersArgs { Logins = new[] { username } };
+
+            var res = await client.GetUsersAsync(args);
             var user = res.Data.FirstOrDefault();
 
             if (user is null)
@@ -50,7 +54,7 @@ namespace TwitchTools
             );
         }
 
-        private static async Task InfoMultiple(IEnumerable<string> usernames, InfoSort sort)
+        private static async Task InfoMultiple(IEnumerable<string> usernames, bool isId, InfoSort? sort)
         {
             var clientId = Program.GetEnvironmentVariableOrError(Program.EnvClientId);
             var token = Program.GetEnvironmentVariableOrError(Program.EnvToken);
@@ -61,8 +65,12 @@ namespace TwitchTools
 
             while (remainingUsers.Any())
             {
-                var requestParams = new GetUsersArgs { Logins = remainingUsers.Take(BatchLimit).ToArray() };
-                var response = await client.GetUsersAsync(requestParams);
+                var batch = remainingUsers.Take(BatchLimit).ToArray();
+                var args = isId
+                    ? new GetUsersArgs { Ids = batch }
+                    : new GetUsersArgs { Logins = batch };
+
+                var response = await client.GetUsersAsync(args);
                 retrievedUsers.AddRange(response.Data);
                 remainingUsers = remainingUsers.Skip(BatchLimit);
             }
@@ -71,8 +79,7 @@ namespace TwitchTools
             {
                 InfoSort.Date => retrievedUsers.OrderBy(x => x.CreatedAt).ToList(),
                 InfoSort.Name => retrievedUsers.OrderBy(x => x.Login).ToList(),
-                InfoSort.None => retrievedUsers,
-                _ => throw new ArgumentException("Invalid argument value", nameof(sort))
+                _ => retrievedUsers,
             };
 
             Console.WriteLine(string.Join(',', new[]
@@ -110,7 +117,6 @@ namespace TwitchTools
 
         public enum InfoSort
         {
-            None,
             Date,
             Name
         }

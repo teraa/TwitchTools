@@ -29,8 +29,7 @@ namespace TwitchTools
                 new Option<bool>(
                     aliases: new[] { "-i", "--is-id" },
                     getDefaultValue: () => false,
-                    description: "indicates that the provided user argument is a user ID rather than a username"
-                ),
+                    description: "indicates that the provided user argument is a user ID rather than a username"),
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
                     getDefaultValue: () => 100,
@@ -49,12 +48,16 @@ namespace TwitchTools
                 description: "print user info")
             {
                 new Argument<IEnumerable<string>>("username"),
-                new Option<InfoCommand.InfoSort>(
+                new Option<bool>(
+                    aliases: new[] { "-i", "--is-id" },
+                    getDefaultValue: () => false,
+                    description: "indicates that the provided user argument is a user ID rather than a username"),
+                new Option<InfoCommand.InfoSort?>(
                     aliases: new[] { "-s", "--sort" },
-                    getDefaultValue: () => InfoCommand.InfoSort.None,
+                    getDefaultValue: () => null,
                     description: "sort results by")
             };
-            infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, InfoCommand.InfoSort>(InfoCommand.RunAsync);
+            infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, bool, InfoCommand.InfoSort?>(InfoCommand.RunAsync);
             rootCommand.AddCommand(infoCommand);
             #endregion
 

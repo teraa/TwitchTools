@@ -36,6 +36,7 @@ namespace TwitchTools.Commands
                     "#",
                     "Followed at (UTC)",
                     "ID",
+                    "Login",
                     "DisplayName",
                 }
             ));
@@ -68,6 +69,7 @@ namespace TwitchTools.Commands
                         $"{(++count).ToString(countFormat)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.ToId,
+                        follow.ToLogin,
                         follow.ToName,
                     },
                 FollowOrigin.To
@@ -76,6 +78,7 @@ namespace TwitchTools.Commands
                         $"{(++count).ToString(countFormat)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.FromId,
+                        follow.FromLogin,
                         follow.FromName,
                     },
                 _ => throw new ArgumentOutOfRangeException(nameof(args.Origin))

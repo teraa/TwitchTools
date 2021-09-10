@@ -80,7 +80,7 @@ namespace TwitchTools
 
             #region infobatch
             var infoBatchCommand = new Command(
-                name: "info",
+                name: "infobatch",
                 description: "print user info")
             {
                 new Argument<IEnumerable<string>>("users"),

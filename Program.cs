@@ -60,7 +60,7 @@ namespace TwitchTools
                 name: "info",
                 description: "print user info")
             {
-                new Argument<IEnumerable<string>>("users"),
+                new Argument<string>("user"),
                 new Option<bool>(
                     aliases: new[] { "-i", "--is-id" },
                     getDefaultValue: () => false,

@@ -23,9 +23,6 @@ namespace TwitchTools.Commands
 
         public async Task RunAsync()
         {
-            Login ??= Program.GetEnvironmentVariableOrError(Program.EnvLogin);
-            Token ??= Program.GetEnvironmentVariableOrError(Program.EnvChatToken);
-
             var users = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x))

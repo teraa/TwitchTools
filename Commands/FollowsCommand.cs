@@ -16,6 +16,8 @@ namespace TwitchTools.Commands
         public int Limit { get; set; }
         public string After { get; set; }
         public bool PrintCursor { get; set; }
+        public string ClientId { get; set; }
+        public string Token { get; set; }
 
         public enum FollowOrigin
         {
@@ -25,9 +27,9 @@ namespace TwitchTools.Commands
 
         public async Task RunAsync()
         {
-            var clientId = Program.GetEnvironmentVariableOrError(Program.EnvClientId);
-            var token = Program.GetEnvironmentVariableOrError(Program.EnvToken);
-            var client = new TwitchRestClient(clientId, token);
+            // TODO: validate clientid, token not null
+
+            var client = new TwitchRestClient(ClientId, Token);
 
             string userId;
             if (IsId)

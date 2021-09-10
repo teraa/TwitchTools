@@ -41,7 +41,15 @@ namespace TwitchTools
                 new Option<bool>(
                     aliases: new[] { "-c", "--print-cursor" },
                     getDefaultValue: () => false,
-                    description: "print the last cursor at the end")
+                    description: "print the last cursor at the end"),
+                new Option<string>(
+                    aliases: new[] { "--client-id" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvClientId),
+                    description: $"Client ID"),
+                new Option<string>(
+                    aliases: new[] { "--token" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken),
+                    description: $"Access token")
             };
             followsCommand.Handler = CommandHandler.Create<FollowsCommand>(x => x.RunAsync());
             rootCommand.AddCommand(followsCommand);
@@ -52,18 +60,49 @@ namespace TwitchTools
                 name: "info",
                 description: "print user info")
             {
-                new Argument<IEnumerable<string>>("username"),
+                new Argument<IEnumerable<string>>("users"),
                 new Option<bool>(
                     aliases: new[] { "-i", "--is-id" },
                     getDefaultValue: () => false,
                     description: "indicates that the provided user argument is a user ID rather than a username"),
-                new Option<InfoCommand.InfoSort?>(
-                    aliases: new[] { "-s", "--sort" },
-                    getDefaultValue: () => null,
-                    description: "sort results by")
+                new Option<string>(
+                    aliases: new[] { "--client-id" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvClientId),
+                    description: $"Client ID"),
+                new Option<string>(
+                    aliases: new[] { "--token" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken),
+                    description: $"Access token")
             };
             infoCommand.Handler = CommandHandler.Create<InfoCommand>(x => x.RunAsync());
             rootCommand.AddCommand(infoCommand);
+            #endregion
+
+            #region infobatch
+            var infoBatchCommand = new Command(
+                name: "info",
+                description: "print user info")
+            {
+                new Argument<IEnumerable<string>>("users"),
+                new Option<bool>(
+                    aliases: new[] { "-i", "--is-id" },
+                    getDefaultValue: () => false,
+                    description: "indicates that the provided user argument is a user ID rather than a username"),
+                new Option<InfoBatchCommand.InfoSort?>(
+                    aliases: new[] { "-s", "--sort-by" },
+                    getDefaultValue: () => null,
+                    description: "sort results by"),
+                new Option<string>(
+                    aliases: new[] { "--client-id" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvClientId),
+                    description: $"Client ID"),
+                new Option<string>(
+                    aliases: new[] { "--token" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken),
+                    description: $"Access token")
+            };
+            infoBatchCommand.Handler = CommandHandler.Create<InfoBatchCommand>(x => x.RunAsync());
+            rootCommand.AddCommand(infoBatchCommand);
             #endregion
 
             #region bantool
@@ -96,9 +135,11 @@ namespace TwitchTools
                     description: "wait for keypress to terminate the program after executing all the commands"),
                 new Option<string>(
                     aliases: new[] { "--login" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvLogin),
                     description: $"login username"),
                 new Option<string>(
                     aliases: new[] { "--token" },
+                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvChatToken),
                     description: $"OAuth token")
             };
             banToolCommand.Handler = CommandHandler.Create<BanToolCommand>(x => x.RunAsync());
@@ -114,7 +155,7 @@ namespace TwitchTools
             Environment.Exit(1);
         }
 
-        public static string GetEnvironmentVariableOrError(string key)
+        public static string GetEnvironmentVariableOrError2(string key)
         {
             var value = Environment.GetEnvironmentVariable(key);
             if (value is null)

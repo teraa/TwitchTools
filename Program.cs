@@ -154,13 +154,5 @@ namespace TwitchTools
             Console.Error.WriteLine($"Error: {message}\n");
             Environment.Exit(1);
         }
-
-        public static string GetEnvironmentVariableOrError2(string key)
-        {
-            var value = Environment.GetEnvironmentVariable(key);
-            if (value is null)
-                Error($"Missing {key} environment variable.");
-            return value;
-        }
     }
 }

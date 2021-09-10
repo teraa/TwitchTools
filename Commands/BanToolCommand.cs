@@ -37,6 +37,15 @@ namespace TwitchTools.Commands
                 return;
             }
 
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+                builder.AddDebug();
+                builder.AddFilter("*", LogLevel.Trace);
+            });
+
+            var logger = loggerFactory.CreateLogger<BanToolCommand>();
+
             using var client = new TwitchIrcClient
             (
                 options: new()
@@ -44,7 +53,7 @@ namespace TwitchTools.Commands
                     CommandLimit = new(Limit, TimeSpan.FromSeconds(Period)),
                     PingInterval = TimeSpan.FromMinutes(4),
                 },
-                logger: new MyLogger<TwitchIrcClient>()
+                logger: loggerFactory.CreateLogger<TwitchIrcClient>()
             );
 
             using var sem = new SemaphoreSlim(0);
@@ -58,13 +67,13 @@ namespace TwitchTools.Commands
             client.Ready += Ready;
             client.RawMessageReceived += m =>
             {
-                ConsoleUtils.Write($"> {m}\n", ConsoleColor.DarkYellow);
+                logger.LogTrace($"recv: {m}");
                 return Task.CompletedTask;
             };
             client.IrcMessageSent += m =>
             {
                 if (m.Command != IrcCommand.PASS)
-                    ConsoleUtils.Write($"< {m}\n", ConsoleColor.DarkGreen);
+                    logger.LogTrace($"send: {m}");
 
                 return Task.CompletedTask;
             };
@@ -94,42 +103,6 @@ namespace TwitchTools.Commands
             }
 
             await client.DisconnectAsync();
-        }
-    }
-
-    public class MyLogger<T> : ILogger<T>
-    {
-        public static readonly object Lock = new();
-
-        public IDisposable BeginScope<TState>(TState state)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-        {
-            lock (Lock)
-            {
-                var str = formatter(state, exception);
-                var color = Console.ForegroundColor;
-                Console.ForegroundColor = logLevel switch
-                {
-                    LogLevel.Warning => ConsoleColor.Yellow,
-                    LogLevel.Error => ConsoleColor.Red,
-                    _ => ConsoleColor.Gray
-                };
-                Console.WriteLine(str);
-                if (exception is not null)
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(exception);
-                }
-                Console.ForegroundColor = color;
-            }
         }
     }
 }

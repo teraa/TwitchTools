@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.Threading.Tasks;
 using TwitchTools.Commands;
 
 namespace TwitchTools
@@ -15,7 +16,7 @@ namespace TwitchTools
         internal const string EnvLogin = "CHAT_LOGIN";
         internal const string EnvChatToken = "CHAT_TOKEN";
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var rootCommand = new RootCommand();
 
@@ -42,7 +43,7 @@ namespace TwitchTools
                     getDefaultValue: () => false,
                     description: "print the last cursor at the end")
             };
-            followsCommand.Handler = CommandHandler.Create<FollowsCommand.Args>(FollowsCommand.RunAsync);
+            followsCommand.Handler = CommandHandler.Create<FollowsCommand>(x => x.RunAsync());
             rootCommand.AddCommand(followsCommand);
             #endregion
 
@@ -61,7 +62,7 @@ namespace TwitchTools
                     getDefaultValue: () => null,
                     description: "sort results by")
             };
-            infoCommand.Handler = CommandHandler.Create<IEnumerable<string>, bool, InfoCommand.InfoSort?>(InfoCommand.RunAsync);
+            infoCommand.Handler = CommandHandler.Create<InfoCommand>(x => x.RunAsync());
             rootCommand.AddCommand(infoCommand);
             #endregion
 
@@ -100,11 +101,11 @@ namespace TwitchTools
                     aliases: new[] { "--token" },
                     description: $"OAuth token")
             };
-            banToolCommand.Handler = CommandHandler.Create<BanToolCommand.Args>(BanToolCommand.RunAsync);
+            banToolCommand.Handler = CommandHandler.Create<BanToolCommand>(x => x.RunAsync());
             rootCommand.AddCommand(banToolCommand);
             #endregion
 
-            rootCommand.Invoke(args);
+            await rootCommand.InvokeAsync(args);
         }
 
         public static void Error(string message)

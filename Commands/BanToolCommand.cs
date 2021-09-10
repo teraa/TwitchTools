@@ -8,21 +8,30 @@ using System.Threading.Tasks;
 using Twitch.Irc;
 using TwitchTools.Utils;
 
-namespace TwitchTools
+namespace TwitchTools.Commands
 {
-    public static class BanToolCommand
+    public class BanToolCommand : ICommand
     {
-        public static async Task RunAsync(Args args)
+        public string Channel { get; set; }
+        public string Command { get; set; }
+        public string Arguments { get; set; }
+        public int Limit { get; set; }
+        public int Period { get; set; }
+        public bool Wait { get; set; }
+        public string Login { get; set; }
+        public string Token { get; set; }
+
+        public async Task RunAsync()
         {
-            args.Login ??= Program.GetEnvironmentVariableOrError(Program.EnvLogin);
-            args.Token ??= Program.GetEnvironmentVariableOrError(Program.EnvChatToken);
+            Login ??= Program.GetEnvironmentVariableOrError(Program.EnvLogin);
+            Token ??= Program.GetEnvironmentVariableOrError(Program.EnvChatToken);
 
             var users = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();
 
-            if (!ConsoleUtils.GetAnswer($"Running command: \"/{args.Command} {{user}} {args.Arguments}\"\non {users.Count} users, continue?", true))
+            if (!ConsoleUtils.GetAnswer($"Running command: \"/{Command} {{user}} {Arguments}\"\non {users.Count} users, continue?", true))
             {
                 Console.WriteLine("Abort.");
                 return;
@@ -32,7 +41,7 @@ namespace TwitchTools
             (
                 options: new()
                 {
-                    CommandLimit = new(args.Limit, TimeSpan.FromSeconds(args.Period)),
+                    CommandLimit = new(Limit, TimeSpan.FromSeconds(Period)),
                     PingInterval = TimeSpan.FromMinutes(4),
                 },
                 logger: new MyLogger<TwitchIrcClient>()
@@ -60,7 +69,7 @@ namespace TwitchTools
                 return Task.CompletedTask;
             };
 
-            await client.ConnectAsync(args.Login, args.Token);
+            await client.ConnectAsync(Login, Token);
             await sem.WaitAsync();
 
             var tasks = new List<Task>();
@@ -69,15 +78,15 @@ namespace TwitchTools
                 var message = new IrcMessage
                 {
                     Command = IrcCommand.PRIVMSG,
-                    Arg = $"#{args.Channel}",
-                    Content = new($"/{args.Command} {user} {args.Arguments}"),
+                    Arg = $"#{Channel}",
+                    Content = new($"/{Command} {user} {Arguments}"),
                 };
                 tasks.Add(client.SendAsync(message));
             }
 
             await Task.WhenAll(tasks);
 
-            if (args.Wait && !Console.IsInputRedirected)
+            if (Wait && !Console.IsInputRedirected)
             {
                 var exitKey = new ConsoleKeyInfo('q', ConsoleKey.Q, shift: false, alt: false, control: false);
                 Console.WriteLine($"Press {exitKey.KeyChar} to quit.");
@@ -85,18 +94,6 @@ namespace TwitchTools
             }
 
             await client.DisconnectAsync();
-        }
-
-        public class Args
-        {
-            public string Channel { get; set; }
-            public string Command { get; set; }
-            public string Arguments { get; set; }
-            public int Limit { get; set; }
-            public int Period { get; set; }
-            public bool Wait { get; set; }
-            public string Login { get; set; }
-            public string Token { get; set; }
         }
     }
 

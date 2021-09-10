@@ -6,27 +6,40 @@ using Twitch.Rest.Helix;
 
 namespace TwitchTools.Commands
 {
-    public static class FollowsCommand
+    public class FollowsCommand : ICommand
     {
         private const int BatchLimit = 100;
 
-        public static async Task RunAsync(Args args)
+        public FollowOrigin Origin { get; set; }
+        public string User { get; set; }
+        public bool IsId { get; set; }
+        public int Limit { get; set; }
+        public string After { get; set; }
+        public bool PrintCursor { get; set; }
+
+        public enum FollowOrigin
+        {
+            From,
+            To
+        }
+
+        public async Task RunAsync()
         {
             var clientId = Program.GetEnvironmentVariableOrError(Program.EnvClientId);
             var token = Program.GetEnvironmentVariableOrError(Program.EnvToken);
             var client = new TwitchRestClient(clientId, token);
 
             string userId;
-            if (args.IsId)
+            if (IsId)
             {
-                userId = args.User;
+                userId = User;
             }
             else
             {
-                var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { args.User } });
+                var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } });
                 var restUser = response.Data.FirstOrDefault();
                 if (restUser is null)
-                    Program.Error($"Could not find user: {args.User}");
+                    Program.Error($"Could not find user: {User}");
 
                 userId = restUser.Id;
             }
@@ -41,27 +54,27 @@ namespace TwitchTools.Commands
                 }
             ));
 
-            string countFormat = $"d{(int)Math.Ceiling(Math.Log10(args.Limit + 1))}";
+            string countFormat = $"d{(int)Math.Ceiling(Math.Log10(Limit + 1))}";
 
-            (string fromId, string toId) user = args.Origin switch
+            (string fromId, string toId) user = Origin switch
             {
                 FollowOrigin.From => (userId, null),
                 FollowOrigin.To => (null, userId),
-                _ => throw new ArgumentOutOfRangeException(nameof(args.Origin))
+                _ => throw new ArgumentOutOfRangeException(nameof(Origin))
             };
 
             int count = 0;
-            string lastCursor = args.After;
+            string lastCursor = After;
 
             var firstRequestArgs = new GetFollowsArgs
             {
                 FromId = user.fromId,
                 ToId = user.toId,
                 After = lastCursor,
-                First = GetNextLimit(count, args.Limit),
+                First = GetNextLimit(count, Limit),
             };
 
-            Func<Follow, List<string>> dataSelector = args.Origin switch
+            Func<Follow, List<string>> dataSelector = Origin switch
             {
                 FollowOrigin.From
                     => follow => new List<string>
@@ -81,7 +94,7 @@ namespace TwitchTools.Commands
                         follow.FromLogin,
                         follow.FromName,
                     },
-                _ => throw new ArgumentOutOfRangeException(nameof(args.Origin))
+                _ => throw new ArgumentOutOfRangeException(nameof(Origin))
             };
 
             try
@@ -96,7 +109,7 @@ namespace TwitchTools.Commands
                 throw;
             }
 
-            if (args.PrintCursor && lastCursor is { Length: > 0 })
+            if (PrintCursor && lastCursor is { Length: > 0 })
                     Console.WriteLine($"Last cursor: {lastCursor}");
 
             Task<GetResponse<Follow>> Request()
@@ -110,7 +123,7 @@ namespace TwitchTools.Commands
                     FromId = firstRequestArgs.FromId,
                     ToId = firstRequestArgs.ToId,
                     After = lastCursor,
-                    First = GetNextLimit(count, args.Limit),
+                    First = GetNextLimit(count, Limit),
                 };
 
                 return client.GetFollowsAsync(newArgs);
@@ -125,7 +138,7 @@ namespace TwitchTools.Commands
             }
             bool Condition(GetResponse<Follow> res)
             {
-                return lastCursor is { Length: > 0 } && count < args.Limit;
+                return lastCursor is { Length: > 0 } && count < Limit;
             }
 
         }
@@ -145,22 +158,6 @@ namespace TwitchTools.Commands
                 result = await nextRequest(result);
                 perform?.Invoke(result);
             }
-        }
-
-        public class Args
-        {
-            public FollowOrigin Origin { get; set; }
-            public string User { get; set; }
-            public bool IsId { get; set; }
-            public int Limit { get; set; }
-            public string After { get; set; }
-            public bool PrintCursor { get; set; }
-        }
-
-        public enum FollowOrigin
-        {
-            From,
-            To
         }
 
     }

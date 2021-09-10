@@ -5,22 +5,32 @@ using System.Threading.Tasks;
 using Twitch.Rest.Helix;
 using TwitchTools.Utils;
 
-namespace TwitchTools
+namespace TwitchTools.Commands
 {
-    public static class InfoCommand
+    public class InfoCommand : ICommand
     {
         private const int BatchLimit = 100;
 
-        public static async Task RunAsync(IEnumerable<string> username, bool isId, InfoSort? sort)
+        public IEnumerable<string> Username { get; set; }
+        public bool IsId { get; set; }
+        public InfoSort? Sort { get; set; }
+
+        public enum InfoSort
         {
-            username ??= ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
+            Date,
+            Name
+        }
+
+        public async Task RunAsync()
+        {
+            Username ??= ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
-            if (username.Count() == 1)
-                await InfoSingle(username.First(), isId);
+            if (Username.Count() == 1)
+                await InfoSingle(Username.First(), IsId);
             else
-                await InfoMultiple(username, isId, sort);
+                await InfoMultiple(Username, IsId, Sort);
         }
 
         private static async Task InfoSingle(string username, bool isId)
@@ -118,12 +128,5 @@ namespace TwitchTools
                     Console.WriteLine(user);
             }
         }
-
-        public enum InfoSort
-        {
-            Date,
-            Name
-        }
-
     }
 }

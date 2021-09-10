@@ -26,7 +26,11 @@ namespace TwitchTools.Commands
 
         public async Task RunAsync()
         {
-            // TODO: validate clientid, token not null
+            if (ClientId is null)
+                Program.Error("Client ID not set.");
+
+            if (Token is null)
+                Program.Error("Token not set.");
 
             Users ??= ConsoleUtils.GetInputList("Enter users:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)

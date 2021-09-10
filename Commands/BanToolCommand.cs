@@ -23,6 +23,12 @@ namespace TwitchTools.Commands
 
         public async Task RunAsync()
         {
+            if (Login is null)
+                Program.Error("Login not set.");
+
+            if (Token is null)
+                Program.Error("Token not set.");
+
             var users = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x))

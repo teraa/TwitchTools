@@ -16,7 +16,11 @@ namespace TwitchTools.Commands
 
         public async Task RunAsync()
         {
-            // TODO: validate clientid, token not null
+            if (ClientId is null)
+                Program.Error("Client ID not set.");
+
+            if (Token is null)
+                Program.Error("Token not set.");
 
             var client = new TwitchRestClient(ClientId, Token);
 

@@ -13,12 +13,13 @@ namespace TwitchTools.Commands
 
         public IEnumerable<string> Users { get; set; }
         public bool IsId { get; set; }
-        public InfoSort? SortBy { get; set; }
+        public InfoSort SortBy { get; set; }
         public string ClientId { get; set; }
         public string Token { get; set; }
 
         public enum InfoSort
         {
+            None,
             Date,
             Name
         }
@@ -50,9 +51,10 @@ namespace TwitchTools.Commands
 
             retrievedUsers = SortBy switch
             {
+                InfoSort.None => retrievedUsers,
                 InfoSort.Date => retrievedUsers.OrderBy(x => x.CreatedAt).ToList(),
                 InfoSort.Name => retrievedUsers.OrderBy(x => x.Login).ToList(),
-                _ => retrievedUsers,
+                _ => throw new ArgumentOutOfRangeException(nameof(SortBy), SortBy, "Unknown value."),
             };
 
             Console.WriteLine(string.Join(',', new[]

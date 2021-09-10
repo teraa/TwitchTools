@@ -90,7 +90,7 @@ namespace TwitchTools
                     description: "indicates that the provided user argument is a user ID rather than a username"),
                 new Option<InfoBatchCommand.InfoSort?>(
                     aliases: new[] { "-s", "--sort-by" },
-                    getDefaultValue: () => null,
+                    getDefaultValue: () => InfoBatchCommand.InfoSort.None,
                     description: "sort results by"),
                 new Option<string>(
                     aliases: new[] { "--client-id" },

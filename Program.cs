@@ -11,10 +11,10 @@ namespace TwitchTools
     public class Program
     {
         internal const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
-        internal const string EnvToken = "ACCESSTOKEN";
-        internal const string EnvClientId = "CLIENTID";
-        internal const string EnvLogin = "CHAT_LOGIN";
-        internal const string EnvChatToken = "CHAT_TOKEN";
+        private const string EnvToken = "ACCESSTOKEN";
+        private const string EnvClientId = "CLIENTID";
+        private const string EnvLogin = "CHAT_LOGIN";
+        private const string EnvChatToken = "CHAT_TOKEN";
 
         static async Task Main(string[] args)
         {

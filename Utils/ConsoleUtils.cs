@@ -30,7 +30,7 @@ namespace TwitchTools.Utils
                 Console.WriteLine(message);
 
             var result = new List<string>();
-            string line;
+            string? line;
             while ((line = Console.ReadLine()) != null)
                 result.AddRange(Regex.Split(line, splitPattern));
 

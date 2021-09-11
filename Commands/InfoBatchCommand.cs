@@ -11,11 +11,13 @@ namespace TwitchTools.Commands
     {
         private const int BatchLimit = 100;
 
-        public IEnumerable<string> Users { get; set; }
+        // Arg
+        public IEnumerable<string>? Users { get; set; }
+        // Opt
         public bool IsId { get; set; }
         public InfoSort SortBy { get; set; }
-        public string ClientId { get; set; }
-        public string Token { get; set; }
+        public string ClientId { get; set; } = null!;
+        public string Token { get; set; } = null!;
 
         public enum InfoSort
         {
@@ -39,7 +41,7 @@ namespace TwitchTools.Commands
             IEnumerable<string> remainingUsers = Users.ToList();
             var retrievedUsers = new List<User>();
 
-            var client = new TwitchRestClient(ClientId, Token);
+            var client = new TwitchRestClient(ClientId!, Token!);
 
             while (remainingUsers.Any())
             {
@@ -49,7 +51,7 @@ namespace TwitchTools.Commands
                     : new GetUsersArgs { Logins = batch };
 
                 var response = await client.GetUsersAsync(args);
-                retrievedUsers.AddRange(response.Data);
+                retrievedUsers.AddRange(response!.Data);
                 remainingUsers = remainingUsers.Skip(BatchLimit);
             }
 

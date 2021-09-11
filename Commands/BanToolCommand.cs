@@ -12,14 +12,16 @@ namespace TwitchTools.Commands
 {
     public class BanToolCommand : ICommand
     {
-        public string Channel { get; set; }
-        public string Command { get; set; }
-        public string Arguments { get; set; }
+        // Arg
+        public string Channel { get; set; } = null!;
+        public string Command { get; set; } = null!;
+        public string Arguments { get; set; } = null!;
+        // Opt
         public int Limit { get; set; }
         public int Period { get; set; }
         public bool Wait { get; set; }
-        public string Login { get; set; }
-        public string Token { get; set; }
+        public string Login { get; set; } = null!;
+        public string Token { get; set; } = null!;
 
         public async Task RunAsync()
         {
@@ -81,7 +83,7 @@ namespace TwitchTools.Commands
                 return Task.CompletedTask;
             };
 
-            await client.ConnectAsync(Login, Token);
+            await client.ConnectAsync(Login!, Token!);
             await sem.WaitAsync();
 
             var tasks = new List<Task>();

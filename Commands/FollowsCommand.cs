@@ -10,14 +10,16 @@ namespace TwitchTools.Commands
     {
         private const int BatchLimit = 100;
 
+        // Arg
         public FollowOrigin Origin { get; set; }
-        public string User { get; set; }
+        public string User { get; set; } = null!;
+        // Opt
         public bool IsId { get; set; }
         public int Limit { get; set; }
-        public string After { get; set; }
+        public string? After { get; set; }
         public bool PrintCursor { get; set; }
-        public string ClientId { get; set; }
-        public string Token { get; set; }
+        public string ClientId { get; set; } = null!;
+        public string Token { get; set; } = null!;
 
         public enum FollowOrigin
         {
@@ -33,7 +35,7 @@ namespace TwitchTools.Commands
             if (Token is null)
                 Program.Error("Token not set.");
 
-            var client = new TwitchRestClient(ClientId, Token);
+            var client = new TwitchRestClient(ClientId!, Token!);
 
             string userId;
             if (IsId)
@@ -43,11 +45,11 @@ namespace TwitchTools.Commands
             else
             {
                 var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } });
-                var restUser = response.Data.FirstOrDefault();
+                var restUser = response!.Data.FirstOrDefault();
                 if (restUser is null)
                     Program.Error($"Could not find user: {User}");
 
-                userId = restUser.Id;
+                userId = restUser!.Id;
             }
 
             Console.WriteLine(string.Join(',', new[]
@@ -62,7 +64,7 @@ namespace TwitchTools.Commands
 
             string countFormat = $"d{(int)Math.Ceiling(Math.Log10(Limit + 1))}";
 
-            (string fromId, string toId) user = Origin switch
+            (string? fromId, string? toId) user = Origin switch
             {
                 FollowOrigin.From => (userId, null),
                 FollowOrigin.To => (null, userId),
@@ -70,7 +72,7 @@ namespace TwitchTools.Commands
             };
 
             int count = 0;
-            string lastCursor = After;
+            string? lastCursor = After;
 
             var firstRequestArgs = new GetFollowsArgs
             {
@@ -120,7 +122,7 @@ namespace TwitchTools.Commands
 
             Task<GetResponse<Follow>> Request()
             {
-                return client.GetFollowsAsync(firstRequestArgs);
+                return client.GetFollowsAsync(firstRequestArgs)!;
             }
             Task<GetResponse<Follow>> NextRequest(GetResponse<Follow> prev)
             {
@@ -132,7 +134,7 @@ namespace TwitchTools.Commands
                     First = GetNextLimit(count, Limit),
                 };
 
-                return client.GetFollowsAsync(newArgs);
+                return client.GetFollowsAsync(newArgs)!;
             }
             void Perform(GetResponse<Follow> response)
             {

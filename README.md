@@ -11,6 +11,7 @@ Options:
 
 Commands:
   follows <From|To> <user>                   get a list of follows
-  info <username>                            print user info
+  info <user>                                get info of a user
+  infobatch <users>                          get info of multiple users
   bantool <channel> <command> <arguments>    execute commands in a channel for each specified user [command: ban, arguments: ]
 ```

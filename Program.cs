@@ -58,7 +58,7 @@ namespace TwitchTools
             #region info
             var infoCommand = new Command(
                 name: "info",
-                description: "print user info")
+                description: "get info of a user")
             {
                 new Argument<string>("user"),
                 new Option<bool>(
@@ -81,7 +81,7 @@ namespace TwitchTools
             #region infobatch
             var infoBatchCommand = new Command(
                 name: "infobatch",
-                description: "print user info")
+                description: "get info of multiple users")
             {
                 new Argument<IEnumerable<string>?>("users"),
                 new Option<bool>(

@@ -72,9 +72,9 @@ namespace TwitchTools.Commands
                 }
             ));
 
-            string countFormat = Limit is null
-                ? "d"
-                : $"d{(int)Math.Ceiling(Math.Log10(Limit.Value + 1))}";
+            int padding = Limit is null
+                ? 0
+                : (int)Math.Ceiling(Math.Log10(Limit.Value + 1));
 
             (string? fromId, string? toId) user = Origin switch
             {
@@ -99,7 +99,7 @@ namespace TwitchTools.Commands
                 FollowOrigin.From
                     => follow => new List<string>
                     {
-                        $"{(++count).ToString(countFormat)}",
+                        $"{(++count).ToString().PadLeft(padding)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.ToId,
                         follow.ToLogin,
@@ -108,7 +108,7 @@ namespace TwitchTools.Commands
                 FollowOrigin.To
                     => follow => new List<string>
                     {
-                        $"{(++count).ToString(countFormat)}",
+                        $"{(++count).ToString().PadLeft(padding)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.FromId,
                         follow.FromLogin,

@@ -29,10 +29,11 @@ namespace TwitchTools.Utils
             if (!Console.IsInputRedirected)
                 Console.WriteLine(message);
 
+            var regex = new Regex(splitPattern, RegexOptions.Compiled);
             var result = new List<string>();
             string? line;
             while ((line = Console.ReadLine()) != null)
-                result.AddRange(Regex.Split(line, splitPattern));
+                result.AddRange(regex.Split(line));
 
             return result;
         }

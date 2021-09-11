@@ -10,10 +10,11 @@ Options:
   -?, -h, --help    Show help and usage information
 
 Commands:
-  follows <From|To> <user>                   get a list of follows
-  info <user>                                get info of a user
-  infobatch <users>                          get info of multiple users
-  bantool <channel> <command> <arguments>    execute commands in a channel for each specified user [command: ban, arguments: ]
+  follows <From|To> <user>                   Get a list of follows
+  info <user>                                Get info of a user
+  infobatch <users>                          Get info of multiple users
+  bantool <channel> <command> <arguments>    Execute commands in a channel for each specified user
+                                             [command: ban, arguments: ]
 ```
 
 ## Environment variables

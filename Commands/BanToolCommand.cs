@@ -36,12 +36,6 @@ namespace TwitchTools.Commands
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();
 
-            if (!ConsoleUtils.GetAnswer($"Running command: \"/{Command} {{user}} {Arguments}\"\non {users.Count} users, continue?", true))
-            {
-                Console.WriteLine("Abort.");
-                return;
-            }
-
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
@@ -50,6 +44,12 @@ namespace TwitchTools.Commands
             });
 
             var logger = loggerFactory.CreateLogger<BanToolCommand>();
+
+            if (!ConsoleUtils.GetAnswer($"Running command: \"/{Command} {{user}} {Arguments}\"\non {users.Count} users, continue?", true))
+            {
+                logger.LogInformation("Abort.");
+                return;
+            }
 
             using var client = new TwitchIrcClient
             (
@@ -103,7 +103,7 @@ namespace TwitchTools.Commands
             if (Wait && !Console.IsInputRedirected)
             {
                 var exitKey = new ConsoleKeyInfo('q', ConsoleKey.Q, shift: false, alt: false, control: false);
-                Console.WriteLine($"Press {exitKey.KeyChar} to quit.");
+                logger.LogInformation($"Press {exitKey.KeyChar} to quit.");
                 while (Console.ReadKey(true) != exitKey) ;
             }
 

@@ -2,10 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace TwitchTools.Utils
+namespace TwitchTools
 {
     public static class ConsoleUtils
     {
+        public static void Error(string message)
+        {
+            Console.Error.WriteLine($"Error: {message}");
+        }
+
         public static bool GetAnswer(string question, bool defaultValue)
         {
             if (Console.IsInputRedirected)

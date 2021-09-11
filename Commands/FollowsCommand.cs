@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Twitch.Rest.Helix;
+using static TwitchTools.ConsoleUtils;
 
 namespace TwitchTools.Commands
 {
@@ -18,8 +19,8 @@ namespace TwitchTools.Commands
         public int Limit { get; set; }
         public string? After { get; set; }
         public bool PrintCursor { get; set; }
-        public string ClientId { get; set; } = null!;
-        public string Token { get; set; } = null!;
+        public string? ClientId { get; set; }
+        public string? Token { get; set; }
 
         public enum FollowOrigin
         {
@@ -27,15 +28,21 @@ namespace TwitchTools.Commands
             To
         }
 
-        public async Task RunAsync()
+        public async Task<int> RunAsync()
         {
             if (ClientId is null)
-                Program.Error("Client ID not set.");
+            {
+                Error("Client ID not set.");
+                return 1;
+            }
 
             if (Token is null)
-                Program.Error("Token not set.");
+            {
+                Error("Token not set.");
+                return 1;
+            }
 
-            var client = new TwitchRestClient(ClientId!, Token!);
+            var client = new TwitchRestClient(ClientId, Token);
 
             string userId;
             if (IsId)
@@ -47,7 +54,10 @@ namespace TwitchTools.Commands
                 var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } });
                 var restUser = response!.Data.FirstOrDefault();
                 if (restUser is null)
-                    Program.Error($"Could not find user: {User}");
+                {
+                    Error($"Could not find user: {User}");
+                    return 1;
+                }
 
                 userId = restUser!.Id;
             }
@@ -107,7 +117,30 @@ namespace TwitchTools.Commands
 
             try
             {
-                await PaginatedRequest(Request, NextRequest, Perform, Condition);
+                await PaginatedRequest
+                (
+                    request: () => client.GetFollowsAsync(firstRequestArgs),
+                    nextRequest: response =>
+                    {
+                        var newArgs = new GetFollowsArgs
+                        {
+                            FromId = firstRequestArgs.FromId,
+                            ToId = firstRequestArgs.ToId,
+                            After = lastCursor,
+                            First = GetNextLimit(count, Limit),
+                        };
+
+                        return client.GetFollowsAsync(newArgs);
+                    },
+                    perform: response =>
+                    {
+                        lastCursor = response!.Pagination?.Cursor;
+
+                        foreach (var follow in response.Data)
+                            Console.WriteLine(string.Join(',', dataSelector(follow)));
+                    },
+                    condition: response => lastCursor is { Length: > 0 } && count < Limit
+                );
             }
             catch
             {
@@ -120,51 +153,23 @@ namespace TwitchTools.Commands
             if (PrintCursor && lastCursor is { Length: > 0 })
                     Console.WriteLine($"Last cursor: {lastCursor}");
 
-            Task<GetResponse<Follow>> Request()
-            {
-                return client.GetFollowsAsync(firstRequestArgs)!;
-            }
-            Task<GetResponse<Follow>> NextRequest(GetResponse<Follow> prev)
-            {
-                var newArgs = new GetFollowsArgs
-                {
-                    FromId = firstRequestArgs.FromId,
-                    ToId = firstRequestArgs.ToId,
-                    After = lastCursor,
-                    First = GetNextLimit(count, Limit),
-                };
-
-                return client.GetFollowsAsync(newArgs)!;
-            }
-            void Perform(GetResponse<Follow> response)
-            {
-                lastCursor = response.Pagination?.Cursor;
-
-                foreach (var follow in response.Data)
-                    Console.WriteLine(string.Join(',', dataSelector(follow)));
-
-            }
-            bool Condition(GetResponse<Follow> res)
-            {
-                return lastCursor is { Length: > 0 } && count < Limit;
-            }
-
+            return 0;
         }
-        static int GetNextLimit(int count, int totalLimit)
+        private static int GetNextLimit(int count, int totalLimit)
         {
             var result = totalLimit - count;
             return result > BatchLimit ? BatchLimit : result;
         }
 
-        static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)
+        private static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)
         {
-            var result = await request();
-            perform?.Invoke(result);
+            var result = await request().ConfigureAwait(false);
+            perform.Invoke(result);
 
             while (condition(result))
             {
-                result = await nextRequest(result);
-                perform?.Invoke(result);
+                result = await nextRequest(result).ConfigureAwait(false);
+                perform.Invoke(result);
             }
         }
 

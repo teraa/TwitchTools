@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Twitch.Irc;
-using TwitchTools.Utils;
+using static TwitchTools.ConsoleUtils;
 
 namespace TwitchTools.Commands
 {
@@ -20,18 +20,24 @@ namespace TwitchTools.Commands
         public int Limit { get; set; }
         public int Period { get; set; }
         public bool Wait { get; set; }
-        public string Login { get; set; } = null!;
-        public string Token { get; set; } = null!;
+        public string? Login { get; set; }
+        public string? Token { get; set; }
 
-        public async Task RunAsync()
+        public async Task<int> RunAsync()
         {
             if (Login is null)
-                Program.Error("Login not set.");
+            {
+                Error("Login not set.");
+                return 1;
+            }
 
             if (Token is null)
-                Program.Error("Token not set.");
+            {
+                Error("Token not set.");
+                return 1;
+            }
 
-            var users = ConsoleUtils.GetInputList("Enter usernames:", @"\W+")
+            var users = GetInputList("Enter usernames:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();
@@ -45,10 +51,10 @@ namespace TwitchTools.Commands
 
             var logger = loggerFactory.CreateLogger<BanToolCommand>();
 
-            if (!ConsoleUtils.GetAnswer($"Running command: \"/{Command} {{user}} {Arguments}\"\non {users.Count} users, continue?", true))
+            if (!GetAnswer($"Running command: \"/{Command} {{user}} {Arguments}\"\non {users.Count} users, continue?", true))
             {
                 logger.LogInformation("Abort.");
-                return;
+                return 0;
             }
 
             using var client = new TwitchIrcClient
@@ -83,7 +89,7 @@ namespace TwitchTools.Commands
                 return Task.CompletedTask;
             };
 
-            await client.ConnectAsync(Login!, Token!);
+            await client.ConnectAsync(Login, Token);
             await sem.WaitAsync();
 
             var tasks = new List<Task>();
@@ -108,6 +114,8 @@ namespace TwitchTools.Commands
             }
 
             await client.DisconnectAsync();
+
+            return 0;
         }
     }
 }

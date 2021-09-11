@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Twitch.Rest.Helix;
-using TwitchTools.Utils;
+using static TwitchTools.ConsoleUtils;
 
 namespace TwitchTools.Commands
 {
@@ -16,8 +16,8 @@ namespace TwitchTools.Commands
         // Opt
         public bool IsId { get; set; }
         public InfoSort SortBy { get; set; }
-        public string ClientId { get; set; } = null!;
-        public string Token { get; set; } = null!;
+        public string? ClientId { get; set; }
+        public string? Token { get; set; }
 
         public enum InfoSort
         {
@@ -26,22 +26,28 @@ namespace TwitchTools.Commands
             Name
         }
 
-        public async Task RunAsync()
+        public async Task<int> RunAsync()
         {
             if (ClientId is null)
-                Program.Error("Client ID not set.");
+            {
+                Error("Client ID not set.");
+                return 1;
+            }
 
             if (Token is null)
-                Program.Error("Token not set.");
+            {
+                Error("Token not set.");
+                return 1;
+            }
 
-            Users ??= ConsoleUtils.GetInputList("Enter users:", @"\W+")
+            Users ??= GetInputList("Enter users:", @"\W+")
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
             IEnumerable<string> remainingUsers = Users.ToList();
             var retrievedUsers = new List<User>();
 
-            var client = new TwitchRestClient(ClientId!, Token!);
+            var client = new TwitchRestClient(ClientId, Token);
 
             while (remainingUsers.Any())
             {
@@ -98,6 +104,8 @@ namespace TwitchTools.Commands
                 foreach (var user in missing)
                     Console.WriteLine(user);
             }
+
+            return 0;
         }
     }
 }

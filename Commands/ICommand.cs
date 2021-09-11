@@ -4,6 +4,6 @@ namespace TwitchTools.Commands
 {
     public interface ICommand
     {
-        Task RunAsync();
+        Task<int> RunAsync();
     }
 }

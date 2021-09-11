@@ -16,7 +16,7 @@ namespace TwitchTools
         private const string EnvLogin = "CHAT_LOGIN";
         private const string EnvChatToken = "CHAT_TOKEN";
 
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var rootCommand = new RootCommand();
 
@@ -141,13 +141,7 @@ namespace TwitchTools
             #endregion
 
 
-            await rootCommand.InvokeAsync(args);
-        }
-
-        public static void Error(string message)
-        {
-            Console.Error.WriteLine($"Error: {message}\n");
-            Environment.Exit(1);
+            return await rootCommand.InvokeAsync(args);
         }
     }
 }

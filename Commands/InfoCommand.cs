@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Twitch.Rest.Helix;
+using static TwitchTools.ConsoleUtils;
 
 namespace TwitchTools.Commands
 {
@@ -13,18 +14,24 @@ namespace TwitchTools.Commands
         public string User { get; set; } = null!;
         // Opt
         public bool IsId { get; set; }
-        public string ClientId { get; set; } = null!;
-        public string Token { get; set; } = null!;
+        public string? ClientId { get; set; }
+        public string? Token { get; set; }
 
-        public async Task RunAsync()
+        public async Task<int> RunAsync()
         {
             if (ClientId is null)
-                Program.Error("Client ID not set.");
+            {
+                Error("Client ID not set.");
+                return 1;
+            }
 
             if (Token is null)
-                Program.Error("Token not set.");
+            {
+                Error("Token not set.");
+                return 1;
+            }
 
-            var client = new TwitchRestClient(ClientId!, Token!);
+            var client = new TwitchRestClient(ClientId, Token);
 
             var args = IsId
                 ? new GetUsersArgs { Ids = new[] { User } }
@@ -34,11 +41,14 @@ namespace TwitchTools.Commands
             var user = res!.Data.FirstOrDefault();
 
             if (user is null)
-                Program.Error($"Could not find user: {User}");
+            {
+                Error($"Could not find user: {User}");
+                return 1;
+            }
 
             Console.WriteLine
             (
-                $"ID:               {user!.Id}\n" +
+                $"ID:               {user.Id}\n" +
                 $"Login:            {user.Login}\n" +
                 $"Display Name:     {user.DisplayName}\n" +
                 $"Type:             {user.Type}\n" +
@@ -49,6 +59,8 @@ namespace TwitchTools.Commands
                 $"Profile Image:    {user.ProfileImageUrl}\n" +
                 $"Offline Image:    {user.OfflineImageUrl}\n"
             );
+
+            return 0;
         }
     }
 }

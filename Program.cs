@@ -57,6 +57,10 @@ namespace TwitchTools
                     aliases: new[] { "-c", "--print-cursor" },
                     getDefaultValue: () => false,
                     description: "Print the last cursor at the end"),
+                new Option<bool>(
+                    aliases: new[] { "-n", "--line-numbers" },
+                    getDefaultValue: () => true,
+                    description: "Print line numbers."),
                 clientIdOpt,
                 accessTokenOpt,
             };

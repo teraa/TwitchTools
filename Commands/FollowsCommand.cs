@@ -9,7 +9,8 @@ namespace TwitchTools.Commands
 {
     public class FollowsCommand : ICommand
     {
-        private const int BatchLimit = 100;
+        private const int s_batchLimit = 100;
+        private const char s_separator = ',';
 
         // Arg
         public FollowOrigin Origin { get; set; }
@@ -19,6 +20,7 @@ namespace TwitchTools.Commands
         public int? Limit { get; set; }
         public string? After { get; set; }
         public bool PrintCursor { get; set; }
+        public bool LineNumbers { get; set; }
         public string? ClientId { get; set; }
         public string? Token { get; set; }
 
@@ -62,15 +64,18 @@ namespace TwitchTools.Commands
                 userId = restUser!.Id;
             }
 
-            Console.WriteLine(string.Join(',', new[]
-                {
-                    "#",
-                    "Followed at (UTC)",
-                    "ID",
-                    "Login",
-                    "DisplayName",
-                }
-            ));
+            var headerItems = new List<string>
+            {
+                "Followed at (UTC)",
+                "ID",
+                "Login",
+                "DisplayName",
+            };
+
+            if (LineNumbers)
+                headerItems.Insert(0, "#");
+
+            Console.WriteLine(string.Join(s_separator, headerItems));
 
             int padding = Limit is null
                 ? 0
@@ -96,19 +101,15 @@ namespace TwitchTools.Commands
 
             Func<Follow, List<string>> dataSelector = Origin switch
             {
-                FollowOrigin.From
-                    => follow => new List<string>
+                FollowOrigin.From => (follow) => new List<string>
                     {
-                        $"{(++count).ToString().PadLeft(padding)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.ToId,
                         follow.ToLogin,
                         follow.ToName,
                     },
-                FollowOrigin.To
-                    => follow => new List<string>
+                FollowOrigin.To => (follow) => new List<string>
                     {
-                        $"{(++count).ToString().PadLeft(padding)}",
                         follow.FollowedAt.ToString(Program.TimestampFormat),
                         follow.FromId,
                         follow.FromLogin,
@@ -119,6 +120,8 @@ namespace TwitchTools.Commands
 
             try
             {
+                int lineNumber = 0;
+
                 await PaginatedRequest
                 (
                     request: () => client.GetFollowsAsync(firstRequestArgs),
@@ -137,9 +140,25 @@ namespace TwitchTools.Commands
                     perform: response =>
                     {
                         lastCursor = response!.Pagination?.Cursor;
+                        count += response.Data.Length;
 
-                        foreach (var follow in response.Data)
-                            Console.WriteLine(string.Join(',', dataSelector(follow)));
+                        if (LineNumbers)
+                        {
+                            foreach (var follow in response.Data)
+                            {
+                                lineNumber++;
+
+                                var list = dataSelector(follow);
+                                list.Insert(0, lineNumber.ToString().PadLeft(padding));
+
+                                Console.WriteLine(string.Join(s_separator, list));
+                            }
+                        }
+                        else
+                        {
+                            foreach (var follow in response.Data)
+                                Console.WriteLine(string.Join(s_separator, dataSelector(follow)));
+                        }
                     },
                     condition: response => lastCursor is { Length: > 0 } && (Limit is null || count < Limit)
                 );
@@ -160,12 +179,12 @@ namespace TwitchTools.Commands
         private static int GetNextLimit(int count, int? totalLimit)
         {
             if (totalLimit is null)
-                return BatchLimit;
+                return s_batchLimit;
 
             var result = totalLimit.Value - count;
 
-            return result > BatchLimit
-                ? BatchLimit
+            return result > s_batchLimit
+                ? s_batchLimit
                 : result;
         }
 

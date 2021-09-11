@@ -19,7 +19,7 @@ Commands:
 ## Environment variables
 Each command supports providing all arguments directly from the command line. Following values will fall back to environment variables if not provided on the command line.
 
-Variable      | Option | Commands                        | Description
+Variable      | Option        | Commands                        | Description
 ------------- | ------------- | ------------------------------- | --------------------------
 `ACCESSTOKEN` | `--token`     | `follows`, `info`, `infobatch`  | Access token for Helix API
 `CLIENTID`    | `--client-id` | `follows`, `info`, `infobatch`  | Client ID for Helix API

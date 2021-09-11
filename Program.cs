@@ -20,123 +20,117 @@ namespace TwitchTools
         {
             var rootCommand = new RootCommand();
 
+            #region reused options
+            var isIdOpt = new Option<bool>(
+                aliases: new[] { "-i", "--is-id" },
+                getDefaultValue: () => false,
+                description: "Indicates that the provided user argument is a user ID rather than a username");
+
+            var clientIdOpt = new Option<string>(
+                aliases: new[] { "--client-id" },
+                getDefaultValue: () => Environment.GetEnvironmentVariable(EnvClientId)!,
+                description: $"Client ID");
+
+            var accessTokenOpt = new Option<string>(
+                aliases: new[] { "--token" },
+                getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken)!,
+                description: $"Access token");
+            #endregion
+
+
             #region follows
             var followsCommand = new Command(
                 name: "follows",
-                description: "get a list of follows")
+                description: "Get a list of follows")
             {
                 new Argument<FollowsCommand.FollowOrigin>("origin"),
                 new Argument<string>("user"),
-                new Option<bool>(
-                    aliases: new[] { "-i", "--is-id" },
-                    getDefaultValue: () => false,
-                    description: "indicates that the provided user argument is a user ID rather than a username"),
+                isIdOpt,
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
                     getDefaultValue: () => 100,
-                    description: "number of users to fetch"),
+                    description: "Number of users to fetch"),
                 new Option<string?>(
                     aliases: new[] { "-a", "--after" },
-                    description: "cursor from where to start fetching"),
+                    description: "Cursor from where to start fetching"),
                 new Option<bool>(
                     aliases: new[] { "-c", "--print-cursor" },
                     getDefaultValue: () => false,
-                    description: "print the last cursor at the end"),
-                new Option<string>(
-                    aliases: new[] { "--client-id" },
-                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvClientId)!,
-                    description: $"Client ID"),
-                new Option<string>(
-                    aliases: new[] { "--token" },
-                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken)!,
-                    description: $"Access token")
+                    description: "Print the last cursor at the end"),
+                clientIdOpt,
+                accessTokenOpt,
             };
             followsCommand.Handler = CommandHandler.Create<FollowsCommand>(x => x.RunAsync());
             rootCommand.AddCommand(followsCommand);
             #endregion
 
+
             #region info
             var infoCommand = new Command(
                 name: "info",
-                description: "get info of a user")
+                description: "Get info of a user")
             {
                 new Argument<string>("user"),
-                new Option<bool>(
-                    aliases: new[] { "-i", "--is-id" },
-                    getDefaultValue: () => false,
-                    description: "indicates that the provided user argument is a user ID rather than a username"),
-                new Option<string>(
-                    aliases: new[] { "--client-id" },
-                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvClientId)!,
-                    description: $"Client ID"),
-                new Option<string>(
-                    aliases: new[] { "--token" },
-                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken)!,
-                    description: $"Access token")
+                isIdOpt,
+                clientIdOpt,
+                accessTokenOpt,
             };
             infoCommand.Handler = CommandHandler.Create<InfoCommand>(x => x.RunAsync());
             rootCommand.AddCommand(infoCommand);
             #endregion
 
+
             #region infobatch
             var infoBatchCommand = new Command(
                 name: "infobatch",
-                description: "get info of multiple users")
+                description: "Get info of multiple users")
             {
                 new Argument<IEnumerable<string>?>("users"),
-                new Option<bool>(
-                    aliases: new[] { "-i", "--is-id" },
-                    getDefaultValue: () => false,
-                    description: "indicates that the provided user argument is a user ID rather than a username"),
+                isIdOpt,
                 new Option<InfoBatchCommand.InfoSort?>(
                     aliases: new[] { "-s", "--sort-by" },
                     getDefaultValue: () => InfoBatchCommand.InfoSort.None,
-                    description: "sort results by"),
-                new Option<string>(
-                    aliases: new[] { "--client-id" },
-                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvClientId)!,
-                    description: $"Client ID"),
-                new Option<string>(
-                    aliases: new[] { "--token" },
-                    getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken)!,
-                    description: $"Access token")
+                    description: "Sort results by"),
+                clientIdOpt,
+                accessTokenOpt,
             };
             infoBatchCommand.Handler = CommandHandler.Create<InfoBatchCommand>(x => x.RunAsync());
             rootCommand.AddCommand(infoBatchCommand);
             #endregion
 
+
             #region bantool
             var banToolCommand = new Command(
                 name: "bantool",
-                description: "execute commands in a channel for each specified user")
+                description: "Execute commands in a channel for each specified user")
             {
                 new Argument<string>(
                     name: "channel",
-                    description: "channel to execute the commands in"),
+                    description: "Channel to execute the commands in"),
                 new Argument<string>(
                     name: "command",
                     getDefaultValue: () => "ban",
-                    description: "command to execute"),
+                    description: "Command to execute"),
                 new Argument<string>(
                     name: "arguments",
                     getDefaultValue: () => "",
-                    description: "command arguments"),
+                    description: "Command arguments"),
                 new Option<int>(
                     aliases: new[] { "-l", "--limit" },
                     getDefaultValue: () => 95,
-                    description: "maximum number of action per period"),
+                    description: "Maximum number of action per period"),
                 new Option<int>(
                     aliases: new[] { "-p", "--period" },
                     getDefaultValue: () => 30,
-                    description: "period (in seconds) in which a limited number of actions can be performed"),
+                    description: "Period (in seconds) in which a limited number of actions can be performed"),
                 new Option<bool>(
                     aliases: new[] { "-w", "--wait" },
                     getDefaultValue: () => true,
-                    description: "wait for keypress to terminate the program after executing all the commands"),
+                    description: "Wait for keypress to terminate the program after executing all the commands"),
                 new Option<string>(
                     aliases: new[] { "--login" },
                     getDefaultValue: () => Environment.GetEnvironmentVariable(EnvLogin)!,
-                    description: $"login username"),
+                    description: $"Login username"),
                 new Option<string>(
                     aliases: new[] { "--token" },
                     getDefaultValue: () => Environment.GetEnvironmentVariable(EnvChatToken)!,
@@ -145,6 +139,7 @@ namespace TwitchTools
             banToolCommand.Handler = CommandHandler.Create<BanToolCommand>(x => x.RunAsync());
             rootCommand.AddCommand(banToolCommand);
             #endregion
+
 
             await rootCommand.InvokeAsync(args);
         }

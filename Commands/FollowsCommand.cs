@@ -16,7 +16,7 @@ namespace TwitchTools.Commands
         public string User { get; set; } = null!;
         // Opt
         public bool IsId { get; set; }
-        public int Limit { get; set; }
+        public int? Limit { get; set; }
         public string? After { get; set; }
         public bool PrintCursor { get; set; }
         public string? ClientId { get; set; }
@@ -72,7 +72,9 @@ namespace TwitchTools.Commands
                 }
             ));
 
-            string countFormat = $"d{(int)Math.Ceiling(Math.Log10(Limit + 1))}";
+            string countFormat = Limit is null
+                ? "d"
+                : $"d{(int)Math.Ceiling(Math.Log10(Limit.Value + 1))}";
 
             (string? fromId, string? toId) user = Origin switch
             {
@@ -139,7 +141,7 @@ namespace TwitchTools.Commands
                         foreach (var follow in response.Data)
                             Console.WriteLine(string.Join(',', dataSelector(follow)));
                     },
-                    condition: response => lastCursor is { Length: > 0 } && count < Limit
+                    condition: response => lastCursor is { Length: > 0 } && (Limit is null || count < Limit)
                 );
             }
             catch
@@ -155,10 +157,16 @@ namespace TwitchTools.Commands
 
             return 0;
         }
-        private static int GetNextLimit(int count, int totalLimit)
+        private static int GetNextLimit(int count, int? totalLimit)
         {
-            var result = totalLimit - count;
-            return result > BatchLimit ? BatchLimit : result;
+            if (totalLimit is null)
+                return BatchLimit;
+
+            var result = totalLimit.Value - count;
+
+            return result > BatchLimit
+                ? BatchLimit
+                : result;
         }
 
         private static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)

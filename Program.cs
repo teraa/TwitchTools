@@ -46,9 +46,9 @@ namespace TwitchTools
                 new Argument<FollowsCommand.FollowOrigin>("origin"),
                 new Argument<string>("user"),
                 isIdOpt,
-                new Option<int>(
+                new Option<int?>(
                     aliases: new[] { "-l", "--limit" },
-                    getDefaultValue: () => 100,
+                    getDefaultValue: () => null,
                     description: "Number of users to fetch"),
                 new Option<string?>(
                     aliases: new[] { "-a", "--after" },

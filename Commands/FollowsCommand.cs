@@ -53,7 +53,17 @@ namespace TwitchTools.Commands
             }
             else
             {
-                var response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } });
+                GetResponse<User>? response;
+                try
+                {
+                    response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } });
+                }
+                catch (Exception ex)
+                {
+                    Error(ex.Message);
+                    return 1;
+                }
+
                 var restUser = response!.Data.FirstOrDefault();
                 if (restUser is null)
                 {
@@ -173,10 +183,11 @@ namespace TwitchTools.Commands
                         && (Limit is null || retrieved < Limit)
                 );
             }
-            catch
+            catch (Exception ex)
             {
+                Error(ex.Message);
                 PrintCursor = true;
-                throw;
+                return 1;
             }
             finally
             {

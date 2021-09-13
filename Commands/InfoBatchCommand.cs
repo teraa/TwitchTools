@@ -57,7 +57,17 @@ namespace TwitchTools.Commands
                     ? new GetUsersArgs { Ids = batch }
                     : new GetUsersArgs { Logins = batch };
 
-                var response = await client.GetUsersAsync(args);
+                GetResponse<User>? response;
+                try
+                {
+                    response = await client.GetUsersAsync(args);
+                }
+                catch (Exception ex)
+                {
+                    Error(ex.Message);
+                    return 1;
+                }
+
                 retrievedUsers.AddRange(response!.Data);
                 remainingUsers = remainingUsers.Skip(s_batchLimit);
             }

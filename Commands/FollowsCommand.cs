@@ -77,70 +77,78 @@ namespace TwitchTools.Commands
 
             Console.WriteLine(string.Join(s_separator, headerItems));
 
-            int padding = Limit is null
-                ? 0
-                : (int)Math.Ceiling(Math.Log10(Limit.Value + 1));
+            (string? fromId, string? toId) user;
+            Func<Follow, List<string>> dataSelector;
 
-            (string? fromId, string? toId) user = Origin switch
+            if (Origin is FollowOrigin.From)
             {
-                FollowOrigin.From => (userId, null),
-                FollowOrigin.To => (null, userId),
-                _ => throw new ArgumentOutOfRangeException(nameof(Origin))
-            };
-
-            int count = 0;
-            string? lastCursor = After;
-
-            var firstRequestArgs = new GetFollowsArgs
+                user = (userId, null);
+                dataSelector = (follow) => new List<string>
+                {
+                    follow.FollowedAt.ToString(Program.TimestampFormat),
+                    follow.ToId,
+                    follow.ToLogin,
+                    follow.ToName,
+                };
+            }
+            else if (Origin is FollowOrigin.To)
             {
-                FromId = user.fromId,
-                ToId = user.toId,
-                After = lastCursor,
-                First = GetNextLimit(count, Limit),
-            };
-
-            Func<Follow, List<string>> dataSelector = Origin switch
+                user = (null, userId);
+                dataSelector = (follow) => new List<string>
+                {
+                    follow.FollowedAt.ToString(Program.TimestampFormat),
+                    follow.FromId,
+                    follow.FromLogin,
+                    follow.FromName,
+                };
+            }
+            else
             {
-                FollowOrigin.From => (follow) => new List<string>
-                    {
-                        follow.FollowedAt.ToString(Program.TimestampFormat),
-                        follow.ToId,
-                        follow.ToLogin,
-                        follow.ToName,
-                    },
-                FollowOrigin.To => (follow) => new List<string>
-                    {
-                        follow.FollowedAt.ToString(Program.TimestampFormat),
-                        follow.FromId,
-                        follow.FromLogin,
-                        follow.FromName,
-                    },
-                _ => throw new ArgumentOutOfRangeException(nameof(Origin))
-            };
+                throw new ArgumentOutOfRangeException(nameof(Origin), Origin, "Unknown value.");
+            }
+
+            GetResponse<Follow>? lastResponse = null;
+            int retrieved = 0;
 
             try
             {
                 int lineNumber = 0;
+                int padding = Limit is null
+                    ? 0
+                    : (int)Math.Ceiling(Math.Log10(Limit.Value + 1));
 
                 await PaginatedRequest
                 (
-                    request: () => client.GetFollowsAsync(firstRequestArgs),
-                    nextRequest: response =>
-                    {
-                        var newArgs = new GetFollowsArgs
+                    request: () => client.GetFollowsAsync
+                    (
+                        args: new GetFollowsArgs
                         {
-                            FromId = firstRequestArgs.FromId,
-                            ToId = firstRequestArgs.ToId,
-                            After = lastCursor,
-                            First = GetNextLimit(count, Limit),
-                        };
+                            FromId = user.fromId,
+                            ToId = user.toId,
+                            After = After,
+                            First = Limit is null
+                                ? s_batchLimit
+                                : Math.Min(s_batchLimit, Limit.Value - retrieved),
+                        }
+                    ),
 
-                        return client.GetFollowsAsync(newArgs);
-                    },
+                    nextRequest: response => client.GetFollowsAsync
+                    (
+                        args: new GetFollowsArgs
+                        {
+                            FromId = user.fromId,
+                            ToId = user.toId,
+                            After = response!.Pagination?.Cursor,
+                            First = Limit is null
+                                ? s_batchLimit
+                                : Math.Min(s_batchLimit, Limit.Value - retrieved),
+                        }
+                    ),
+
                     perform: response =>
                     {
-                        lastCursor = response!.Pagination?.Cursor;
-                        count += response.Data.Length;
+                        lastResponse = response;
+                        retrieved += response!.Data.Length;
 
                         if (LineNumbers)
                         {
@@ -160,32 +168,23 @@ namespace TwitchTools.Commands
                                 Console.WriteLine(string.Join(s_separator, dataSelector(follow)));
                         }
                     },
-                    condition: response => lastCursor is { Length: > 0 } && (Limit is null || count < Limit)
+                    condition: (response) =>
+                        response!.Pagination?.Cursor?.Length > 0
+                        && (Limit is null || retrieved < Limit)
                 );
             }
             catch
             {
-                if (lastCursor is { Length: > 0 })
-                    Console.WriteLine($"Last cursor: {lastCursor}");
-
+                PrintCursor = true;
                 throw;
             }
-
-            if (PrintCursor && lastCursor is { Length: > 0 })
-                    Console.WriteLine($"Last cursor: {lastCursor}");
+            finally
+            {
+                if (PrintCursor && lastResponse?.Pagination?.Cursor is { Length: > 0 } cursor)
+                    Console.WriteLine($"Last cursor: {cursor}");
+            }
 
             return 0;
-        }
-        private static int GetNextLimit(int count, int? totalLimit)
-        {
-            if (totalLimit is null)
-                return s_batchLimit;
-
-            var result = totalLimit.Value - count;
-
-            return result > s_batchLimit
-                ? s_batchLimit
-                : result;
         }
 
         private static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)

@@ -9,7 +9,8 @@ namespace TwitchTools.Commands
 {
     public class InfoBatchCommand : ICommand
     {
-        private const int BatchLimit = 100;
+        private const int s_batchLimit = 100;
+        private const char s_separator = ',';
 
         // Arg
         public IEnumerable<string>? Users { get; set; }
@@ -51,14 +52,14 @@ namespace TwitchTools.Commands
 
             while (remainingUsers.Any())
             {
-                var batch = remainingUsers.Take(BatchLimit).ToArray();
+                var batch = remainingUsers.Take(s_batchLimit).ToArray();
                 var args = IsId
                     ? new GetUsersArgs { Ids = batch }
                     : new GetUsersArgs { Logins = batch };
 
                 var response = await client.GetUsersAsync(args);
                 retrievedUsers.AddRange(response!.Data);
-                remainingUsers = remainingUsers.Skip(BatchLimit);
+                remainingUsers = remainingUsers.Skip(s_batchLimit);
             }
 
             retrievedUsers = SortBy switch
@@ -69,7 +70,7 @@ namespace TwitchTools.Commands
                 _ => throw new ArgumentOutOfRangeException(nameof(SortBy), SortBy, "Unknown value."),
             };
 
-            Console.WriteLine(string.Join(',', new[]
+            Console.WriteLine(string.Join(s_separator, new[]
                 {
                     "Created At (UTC)",
                     "ID",
@@ -88,7 +89,7 @@ namespace TwitchTools.Commands
                     user.DisplayName,
                 };
 
-                Console.WriteLine(string.Join(',', data));
+                Console.WriteLine(string.Join(s_separator, data));
             }
 
             Func<User, string> selector = IsId

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Twitch.Rest.Helix;
@@ -46,19 +47,24 @@ namespace TwitchTools.Commands
                 return 1;
             }
 
-            Console.WriteLine
-            (
-                $"ID:               {user.Id}\n" +
-                $"Login:            {user.Login}\n" +
-                $"Display Name:     {user.DisplayName}\n" +
-                $"Type:             {user.Type}\n" +
-                $"Broadcaster Type: {user.BroadcasterType}\n" +
-                $"Description:      {user.Description}\n" +
-                $"Created at (UTC): {user.CreatedAt.ToString(Program.TimestampFormat)}\n" +
-                $"View Count:       {user.ViewCount}\n" +
-                $"Profile Image:    {user.ProfileImageUrl}\n" +
-                $"Offline Image:    {user.OfflineImageUrl}\n"
-            );
+            var data = new (string title, string value)[]
+            {
+                ("ID", user.Id),
+                ("Login", user.Login),
+                ("Display Name", user.DisplayName),
+                ("Type", user.Type),
+                ("Broadcaster Type", user.BroadcasterType),
+                ("Description", user.Description),
+                ("Created at (UTC)", user.CreatedAt.ToString(Program.TimestampFormat)),
+                ("View Count", user.ViewCount.ToString()),
+                ("Profile Image", user.ProfileImageUrl),
+                ("Offline Image", user.OfflineImageUrl),
+            };
+
+            var maxLength = data.Select(x => x.title.Length).Max();
+
+            foreach (var (title, value) in data)
+                Console.WriteLine(title.PadRight(maxLength + 1) + value);
 
             return 0;
         }

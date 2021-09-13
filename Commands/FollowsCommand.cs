@@ -155,7 +155,7 @@ namespace TwitchTools.Commands
                         }
                     ),
 
-                    perform: response =>
+                    action: response =>
                     {
                         lastResponse = response;
                         retrieved += response!.Data.Length;
@@ -178,6 +178,7 @@ namespace TwitchTools.Commands
                                 Console.WriteLine(string.Join(s_separator, dataSelector(follow)));
                         }
                     },
+
                     condition: (response) =>
                         response!.Pagination?.Cursor?.Length > 0
                         && (Limit is null || retrieved < Limit)
@@ -198,15 +199,15 @@ namespace TwitchTools.Commands
             return 0;
         }
 
-        private static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> perform, Func<T, bool> condition)
+        private static async Task PaginatedRequest<T>(Func<Task<T>> request, Func<T, Task<T>> nextRequest, Action<T> action, Func<T, bool> condition)
         {
             var result = await request().ConfigureAwait(false);
-            perform.Invoke(result);
+            action.Invoke(result);
 
             while (condition(result))
             {
                 result = await nextRequest(result).ConfigureAwait(false);
-                perform.Invoke(result);
+                action.Invoke(result);
             }
         }
 

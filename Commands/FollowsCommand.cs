@@ -90,31 +90,32 @@ namespace TwitchTools.Commands
             (string? fromId, string? toId) user;
             Func<Follow, List<string>> dataSelector;
 
-            if (Origin is FollowOrigin.From)
+            switch (Origin)
             {
-                user = (userId, null);
-                dataSelector = (follow) => new List<string>
-                {
-                    follow.FollowedAt.ToString(Program.TimestampFormat),
-                    follow.ToId,
-                    follow.ToLogin,
-                    follow.ToName,
-                };
-            }
-            else if (Origin is FollowOrigin.To)
-            {
-                user = (null, userId);
-                dataSelector = (follow) => new List<string>
-                {
-                    follow.FollowedAt.ToString(Program.TimestampFormat),
-                    follow.FromId,
-                    follow.FromLogin,
-                    follow.FromName,
-                };
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException(nameof(Origin), Origin, "Unknown value.");
+                case FollowOrigin.From:
+                    user = (fromId: userId, toId: null);
+                    dataSelector = (follow) => new List<string>
+                    {
+                        follow.FollowedAt.ToString(Program.TimestampFormat),
+                        follow.ToId,
+                        follow.ToLogin,
+                        follow.ToName,
+                    };
+                    break;
+
+                case FollowOrigin.To:
+                    user = (fromId: null, toId: userId);
+                    dataSelector = (follow) => new List<string>
+                    {
+                        follow.FollowedAt.ToString(Program.TimestampFormat),
+                        follow.FromId,
+                        follow.FromLogin,
+                        follow.FromName,
+                    };
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(Origin), Origin, "Unknown value.");
             }
 
             GetResponse<Follow>? lastResponse = null;
@@ -142,7 +143,7 @@ namespace TwitchTools.Commands
                         }
                     ),
 
-                    nextRequest: response => client.GetFollowsAsync
+                    nextRequest: (response) => client.GetFollowsAsync
                     (
                         args: new GetFollowsArgs
                         {
@@ -155,7 +156,7 @@ namespace TwitchTools.Commands
                         }
                     ),
 
-                    action: response =>
+                    action: (response) =>
                     {
                         lastResponse = response;
                         retrieved += response!.Data.Length;

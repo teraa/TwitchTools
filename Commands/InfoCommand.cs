@@ -37,7 +37,7 @@ namespace TwitchTools.Commands
                 ? new GetUsersArgs { Ids = new[] { User } }
                 : new GetUsersArgs { Logins = new[] { User } };
 
-            GetResponse<User>? response;
+            GetResponse<User> response;
             try
             {
                 response = await client.GetUsersAsync(args);
@@ -48,7 +48,7 @@ namespace TwitchTools.Commands
                 return 1;
             }
 
-            var user = response!.Data.FirstOrDefault();
+            var user = response.Data.FirstOrDefault();
             if (user is null)
             {
                 Error($"Could not find user: {User}");

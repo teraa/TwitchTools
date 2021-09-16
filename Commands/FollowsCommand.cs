@@ -53,7 +53,7 @@ namespace TwitchTools.Commands
             }
             else
             {
-                GetResponse<User>? response;
+                GetResponse<User> response;
                 try
                 {
                     response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } });
@@ -64,14 +64,14 @@ namespace TwitchTools.Commands
                     return 1;
                 }
 
-                var restUser = response!.Data.FirstOrDefault();
+                var restUser = response.Data.FirstOrDefault();
                 if (restUser is null)
                 {
                     Error($"Could not find user: {User}");
                     return 1;
                 }
 
-                userId = restUser!.Id;
+                userId = restUser.Id;
             }
 
             var headerItems = new List<string>
@@ -149,7 +149,7 @@ namespace TwitchTools.Commands
                         {
                             FromId = user.fromId,
                             ToId = user.toId,
-                            After = response!.Pagination?.Cursor,
+                            After = response.Pagination?.Cursor,
                             First = Limit is null
                                 ? s_batchLimit
                                 : Math.Min(s_batchLimit, Limit.Value - retrieved),
@@ -159,7 +159,7 @@ namespace TwitchTools.Commands
                     action: (response) =>
                     {
                         lastResponse = response;
-                        retrieved += response!.Data.Length;
+                        retrieved += response.Data.Length;
 
                         if (LineNumbers)
                         {
@@ -181,7 +181,7 @@ namespace TwitchTools.Commands
                     },
 
                     condition: (response) =>
-                        response!.Pagination?.Cursor?.Length > 0
+                        response.Pagination?.Cursor?.Length > 0
                         && (Limit is null || retrieved < Limit)
                 );
             }

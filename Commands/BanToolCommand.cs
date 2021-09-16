@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Twitch;
 using Twitch.Irc;
 using static TwitchTools.ConsoleUtils;
 
@@ -57,39 +58,39 @@ namespace TwitchTools.Commands
                 return 0;
             }
 
-            using var client = new TwitchIrcClient
-            (
-                options: new()
-                {
-                    CommandLimit = new(Limit, TimeSpan.FromSeconds(Period)),
-                    PingInterval = TimeSpan.FromMinutes(4),
-                },
-                logger: loggerFactory.CreateLogger<TwitchIrcClient>()
-            );
+            var socket = SocketClientFactory.CreateDefault(loggerFactory);
+            using var client = new TwitchIrcClient(socket, loggerFactory.CreateLogger<TwitchIrcClient>())
+            {
+                CommandLimiter = new SlidingWindowRateLimiter(Limit, TimeSpan.FromSeconds(Period)),
+                PingInterval = TimeSpan.FromMinutes(4),
+            };
 
             using var sem = new SemaphoreSlim(0);
 
-            Task Ready()
+            client.Connected += Connected;
+
+            async ValueTask Connected()
             {
-                client.Ready -= Ready;
+                client.Connected -= Connected;
+                await client.LoginAsync(Login, Token).ConfigureAwait(false);
                 sem.Release();
-                return Task.CompletedTask;
             }
-            client.Ready += Ready;
-            client.RawMessageReceived += m =>
-            {
-                logger.LogTrace($"recv: {m}");
-                return Task.CompletedTask;
-            };
-            client.IrcMessageSent += m =>
-            {
-                if (m.Command != IrcCommand.PASS)
-                    logger.LogTrace($"send: {m}");
 
-                return Task.CompletedTask;
+            client.IrcMessageReceived += msg =>
+            {
+                logger.LogTrace($"recv: {msg}");
+                return ValueTask.CompletedTask;
             };
 
-            await client.ConnectAsync(Login, Token);
+            client.IrcMessageSent += msg =>
+            {
+                if (msg.Command != IrcCommand.PASS)
+                    logger.LogTrace($"send: {msg}");
+
+                return ValueTask.CompletedTask;
+            };
+
+            await client.ConnectAsync();
             await sem.WaitAsync();
 
             var tasks = new List<Task>();
@@ -101,7 +102,7 @@ namespace TwitchTools.Commands
                     Arg = $"#{Channel}",
                     Content = new($"/{Command} {user} {Arguments}"),
                 };
-                tasks.Add(client.SendAsync(message));
+                tasks.Add(client.SendAsync(message).AsTask());
             }
 
             await Task.WhenAll(tasks);

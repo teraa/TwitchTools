@@ -1,4 +1,5 @@
 using IrcMessageParser;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -43,27 +44,28 @@ namespace TwitchTools.Commands
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();
 
-            using var loggerFactory = LoggerFactory.Create(builder =>
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddLogging(builder =>
             {
                 builder.AddConsole();
                 builder.AddDebug();
                 builder.AddFilter("*", LogLevel.Trace);
             });
+            serviceCollection.AddTwitchIrcClient(options =>
+            {
+                options.CommandLimiter = new SlidingWindowRateLimiter(Limit, TimeSpan.FromSeconds(Period));
+                options.PingInterval = TimeSpan.FromMinutes(4);
+            });
 
-            var logger = loggerFactory.CreateLogger<BanToolCommand>();
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+            var logger = serviceProvider.GetRequiredService<ILogger<BanToolCommand>>();
+            var client = serviceProvider.GetRequiredService<TwitchIrcClient>();
 
             if (!GetAnswer($"Running command: \"/{Command} {{user}} {Arguments}\"\non {users.Count} users, continue?", true))
             {
                 logger.LogInformation("Abort.");
                 return 0;
             }
-
-            var socket = SocketClientFactory.CreateDefault(loggerFactory);
-            using var client = new TwitchIrcClient(socket, loggerFactory.CreateLogger<TwitchIrcClient>())
-            {
-                CommandLimiter = new SlidingWindowRateLimiter(Limit, TimeSpan.FromSeconds(Period)),
-                PingInterval = TimeSpan.FromMinutes(4),
-            };
 
             using var sem = new SemaphoreSlim(0);
 

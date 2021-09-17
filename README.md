@@ -1,6 +1,7 @@
 # TwitchTools
 Command line tools for Twitch
 
+## Usage
 ```
 Usage:
   TwitchTools [options] [command]
@@ -16,6 +17,7 @@ Commands:
   bantool <channel> <command> <arguments>    Execute commands in a channel for each specified user
                                              [command: ban, arguments: ]
 ```
+For detailed usage use `-h` or equivalent option for each command.
 
 ## Environment variables
 Each command supports providing all arguments directly from the command line. Following values will fall back to environment variables if not provided on the command line.

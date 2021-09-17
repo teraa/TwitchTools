@@ -67,17 +67,6 @@ namespace TwitchTools.Commands
                 return 0;
             }
 
-            using var sem = new SemaphoreSlim(0);
-
-            client.Connected += Connected;
-
-            async ValueTask Connected()
-            {
-                client.Connected -= Connected;
-                await client.LoginAsync(Login, Token).ConfigureAwait(false);
-                sem.Release();
-            }
-
             client.IrcMessageReceived += msg =>
             {
                 logger.LogTrace($"recv: {msg}");
@@ -93,7 +82,7 @@ namespace TwitchTools.Commands
             };
 
             await client.ConnectAsync();
-            await sem.WaitAsync();
+            await client.LoginAsync(Login, Token);
 
             var tasks = new List<Task>();
             foreach (var user in users)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Twitch.Rest.Helix;
 using static TwitchTools.ConsoleUtils;
@@ -27,7 +28,7 @@ namespace TwitchTools.Commands
             Name
         }
 
-        public async Task<int> RunAsync()
+        public async Task<int> RunAsync(CancellationToken cancellationToken)
         {
             if (ClientId is null)
             {
@@ -60,7 +61,11 @@ namespace TwitchTools.Commands
                 GetResponse<User> response;
                 try
                 {
-                    response = await client.GetUsersAsync(args);
+                    response = await client.GetUsersAsync(args, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return 1;
                 }
                 catch (Exception ex)
                 {

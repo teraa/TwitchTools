@@ -25,7 +25,7 @@ namespace TwitchTools.Commands
         public string? Login { get; set; }
         public string? Token { get; set; }
 
-        public async Task<int> RunAsync()
+        public async Task<int> RunAsync(CancellationToken cancellationToken)
         {
             if (Login is null)
             {
@@ -83,38 +83,41 @@ namespace TwitchTools.Commands
 
             try
             {
-                await client.ConnectAsync();
-                await client.LoginAsync(Login, Token);
+                await client.ConnectAsync(cancellationToken);
+                await client.LoginAsync(Login, Token, cancellationToken);
+
+                var tasks = new List<Task>();
+                foreach (var user in users)
+                {
+                    var message = new IrcMessage
+                    {
+                        Command = IrcCommand.PRIVMSG,
+                        Arg = $"#{Channel}",
+                        Content = new($"/{Command} {user} {Arguments}"),
+                    };
+                    tasks.Add(client.SendAsync(message, cancellationToken).AsTask());
+                }
+
+                await Task.WhenAll(tasks);
+
+                if (Wait && !Console.IsInputRedirected)
+                {
+                    var exitKey = new ConsoleKeyInfo('q', ConsoleKey.Q, shift: false, alt: false, control: false);
+                    logger.LogInformation($"Press {exitKey.KeyChar} to quit.");
+                    while (Console.ReadKey(true) != exitKey) ;
+                }
+
+                await client.DisconnectAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return 1;
             }
             catch (Exception ex)
             {
                 Error(ex.Message);
                 return 1;
             }
-
-
-            var tasks = new List<Task>();
-            foreach (var user in users)
-            {
-                var message = new IrcMessage
-                {
-                    Command = IrcCommand.PRIVMSG,
-                    Arg = $"#{Channel}",
-                    Content = new($"/{Command} {user} {Arguments}"),
-                };
-                tasks.Add(client.SendAsync(message).AsTask());
-            }
-
-            await Task.WhenAll(tasks);
-
-            if (Wait && !Console.IsInputRedirected)
-            {
-                var exitKey = new ConsoleKeyInfo('q', ConsoleKey.Q, shift: false, alt: false, control: false);
-                logger.LogInformation($"Press {exitKey.KeyChar} to quit.");
-                while (Console.ReadKey(true) != exitKey) ;
-            }
-
-            await client.DisconnectAsync();
 
             return 0;
         }

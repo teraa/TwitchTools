@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Twitch.Rest.Helix;
 using static TwitchTools.ConsoleUtils;
@@ -30,7 +31,7 @@ namespace TwitchTools.Commands
             To
         }
 
-        public async Task<int> RunAsync()
+        public async Task<int> RunAsync(CancellationToken cancellationToken)
         {
             if (ClientId is null)
             {
@@ -56,7 +57,11 @@ namespace TwitchTools.Commands
                 GetResponse<User> response;
                 try
                 {
-                    response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } });
+                    response = await client.GetUsersAsync(new GetUsersArgs { Logins = new[] { User } }, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return 1;
                 }
                 catch (Exception ex)
                 {
@@ -140,7 +145,8 @@ namespace TwitchTools.Commands
                             First = Limit is null
                                 ? s_batchLimit
                                 : Math.Min(s_batchLimit, Limit.Value - retrieved),
-                        }
+                        },
+                        cancellationToken: cancellationToken
                     ),
 
                     nextRequest: (response) => client.GetFollowsAsync
@@ -153,7 +159,8 @@ namespace TwitchTools.Commands
                             First = Limit is null
                                 ? s_batchLimit
                                 : Math.Min(s_batchLimit, Limit.Value - retrieved),
-                        }
+                        },
+                        cancellationToken: cancellationToken
                     ),
 
                     action: (response) =>
@@ -184,6 +191,10 @@ namespace TwitchTools.Commands
                         response.Pagination?.Cursor?.Length > 0
                         && (Limit is null || retrieved < Limit)
                 );
+            }
+            catch (OperationCanceledException)
+            {
+                return 1;
             }
             catch (Exception ex)
             {

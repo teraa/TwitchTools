@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.Threading;
 using System.Threading.Tasks;
 using TwitchTools.Commands;
 
@@ -64,7 +65,7 @@ namespace TwitchTools
                 clientIdOpt,
                 accessTokenOpt,
             };
-            followsCommand.Handler = CommandHandler.Create<FollowsCommand>(x => x.RunAsync());
+            followsCommand.Handler = CommandHandler.Create((FollowsCommand c, CancellationToken t) => c.RunAsync(t));
             rootCommand.AddCommand(followsCommand);
             #endregion
 
@@ -79,7 +80,7 @@ namespace TwitchTools
                 clientIdOpt,
                 accessTokenOpt,
             };
-            infoCommand.Handler = CommandHandler.Create<InfoCommand>(x => x.RunAsync());
+            infoCommand.Handler = CommandHandler.Create((InfoCommand c, CancellationToken t) => c.RunAsync(t));
             rootCommand.AddCommand(infoCommand);
             #endregion
 
@@ -98,7 +99,7 @@ namespace TwitchTools
                 clientIdOpt,
                 accessTokenOpt,
             };
-            infoBatchCommand.Handler = CommandHandler.Create<InfoBatchCommand>(x => x.RunAsync());
+            infoBatchCommand.Handler = CommandHandler.Create((InfoBatchCommand c, CancellationToken t) => c.RunAsync(t));
             rootCommand.AddCommand(infoBatchCommand);
             #endregion
 
@@ -140,7 +141,7 @@ namespace TwitchTools
                     getDefaultValue: () => Environment.GetEnvironmentVariable(EnvChatToken)!,
                     description: $"OAuth token")
             };
-            banToolCommand.Handler = CommandHandler.Create<BanToolCommand>(x => x.RunAsync());
+            banToolCommand.Handler = CommandHandler.Create((BanToolCommand c, CancellationToken t) => c.RunAsync(t));
             rootCommand.AddCommand(banToolCommand);
             #endregion
 

@@ -24,6 +24,7 @@ namespace TwitchTools.Commands
         public bool LineNumbers { get; set; }
         public string? ClientId { get; set; }
         public string? Token { get; set; }
+        public string? TimestampFormat { get; set; }
 
         public enum FollowOrigin
         {
@@ -101,7 +102,7 @@ namespace TwitchTools.Commands
                     user = (fromId: userId, toId: null);
                     dataSelector = (follow) => new List<string>
                     {
-                        follow.FollowedAt.ToString(Program.TimestampFormat),
+                        follow.FollowedAt.ToString(TimestampFormat),
                         follow.ToId,
                         follow.ToLogin,
                         follow.ToName,
@@ -112,7 +113,7 @@ namespace TwitchTools.Commands
                     user = (fromId: null, toId: userId);
                     dataSelector = (follow) => new List<string>
                     {
-                        follow.FollowedAt.ToString(Program.TimestampFormat),
+                        follow.FollowedAt.ToString(TimestampFormat),
                         follow.FromId,
                         follow.FromLogin,
                         follow.FromName,

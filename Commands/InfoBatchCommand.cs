@@ -20,6 +20,7 @@ namespace TwitchTools.Commands
         public InfoSort SortBy { get; set; }
         public string? ClientId { get; set; }
         public string? Token { get; set; }
+        public string? TimestampFormat { get; set; }
 
         public enum InfoSort
         {
@@ -98,7 +99,7 @@ namespace TwitchTools.Commands
             {
                 var data = new[]
                 {
-                    user.CreatedAt.ToString(Program.TimestampFormat),
+                    user.CreatedAt.ToString(TimestampFormat),
                     user.Id,
                     user.Login,
                     user.DisplayName,

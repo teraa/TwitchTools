@@ -17,6 +17,7 @@ namespace TwitchTools.Commands
         public bool IsId { get; set; }
         public string? ClientId { get; set; }
         public string? Token { get; set; }
+        public string? TimestampFormat { get; set; }
 
         public async Task<int> RunAsync(CancellationToken cancellationToken)
         {
@@ -68,7 +69,7 @@ namespace TwitchTools.Commands
                 ("Type", user.Type),
                 ("Broadcaster Type", user.BroadcasterType),
                 ("Description", user.Description),
-                ("Created at (UTC)", user.CreatedAt.ToString(Program.TimestampFormat)),
+                ("Created at (UTC)", user.CreatedAt.ToString(TimestampFormat)),
                 ("View Count", user.ViewCount.ToString()),
                 ("Profile Image", user.ProfileImageUrl),
                 ("Offline Image", user.OfflineImageUrl),

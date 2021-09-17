@@ -11,7 +11,7 @@ namespace TwitchTools
 {
     public class Program
     {
-        internal const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
+        private const string TimestampFormat = "yyyy-MM-dd HH:mm:ss";
         private const string EnvToken = "ACCESSTOKEN";
         private const string EnvClientId = "CLIENTID";
         private const string EnvLogin = "CHAT_LOGIN";
@@ -36,6 +36,11 @@ namespace TwitchTools
                 aliases: new[] { "--token" },
                 getDefaultValue: () => Environment.GetEnvironmentVariable(EnvToken)!,
                 description: $"Access token");
+
+            var timestampOpt = new Option<string>(
+                aliases: new[] { "--timestamp" },
+                getDefaultValue: () => TimestampFormat,
+                description: "Timestamp format");
             #endregion
 
 
@@ -61,9 +66,10 @@ namespace TwitchTools
                 new Option<bool>(
                     aliases: new[] { "-n", "--line-numbers" },
                     getDefaultValue: () => true,
-                    description: "Print line numbers."),
+                    description: "Print line numbers"),
                 clientIdOpt,
                 accessTokenOpt,
+                timestampOpt,
             };
             followsCommand.Handler = CommandHandler.Create((FollowsCommand c, CancellationToken t) => c.RunAsync(t));
             rootCommand.AddCommand(followsCommand);
@@ -79,6 +85,7 @@ namespace TwitchTools
                 isIdOpt,
                 clientIdOpt,
                 accessTokenOpt,
+                timestampOpt,
             };
             infoCommand.Handler = CommandHandler.Create((InfoCommand c, CancellationToken t) => c.RunAsync(t));
             rootCommand.AddCommand(infoCommand);
@@ -98,6 +105,7 @@ namespace TwitchTools
                     description: "Sort results by"),
                 clientIdOpt,
                 accessTokenOpt,
+                timestampOpt,
             };
             infoBatchCommand.Handler = CommandHandler.Create((InfoBatchCommand c, CancellationToken t) => c.RunAsync(t));
             rootCommand.AddCommand(infoBatchCommand);

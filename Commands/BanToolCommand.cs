@@ -81,8 +81,17 @@ namespace TwitchTools.Commands
                 return ValueTask.CompletedTask;
             };
 
-            await client.ConnectAsync();
-            await client.LoginAsync(Login, Token);
+            try
+            {
+                await client.ConnectAsync();
+                await client.LoginAsync(Login, Token);
+            }
+            catch (Exception ex)
+            {
+                Error(ex.Message);
+                return 1;
+            }
+
 
             var tasks = new List<Task>();
             foreach (var user in users)

@@ -4,4 +4,4 @@ set -a
 set +a
 export CHAT_LOGIN='xx'
 export CHAT_TOKEN='xx'
-/opt/twitchtools/TwitchTools "$@"
+/opt/twitchtools/out/TwitchTools "$@"
